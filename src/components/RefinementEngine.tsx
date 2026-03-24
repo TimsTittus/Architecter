@@ -8,12 +8,12 @@ import { Send, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const RefinementEngine = () => {
-  const { 
-    questions, 
-    answerQuestion, 
-    status, 
-    setStatus, 
-    raw_context, 
+  const {
+    questions,
+    answerQuestion,
+    status,
+    setStatus,
+    raw_context,
     iteration_count,
     incrementIteration,
     setQuestions,
@@ -22,18 +22,15 @@ export const RefinementEngine = () => {
     setIsComplete
   } = useArchitectStore();
 
-  const handleAnswer = (id: string, answer: string) => {
-    // Convert boolean strings to actual booleans
-    const finalAnswer = answer === 'true' ? true : answer === 'false' ? false : answer;
-    answerQuestion(id, finalAnswer);
+  const handleAnswer = (id: string, answer: string | boolean) => {
+    answerQuestion(id, answer);
   };
 
   const handleSubmit = async () => {
-    // Check if all questions are answered
     const unanswered = questions.filter(q => q.answer === undefined || q.answer === '');
     if (unanswered.length > 0) {
-      toast.error('Please answer all questions before proceeding.', {
-        description: `Missing answers for: ${unanswered.map(q => q.field).join(', ')}`
+      toast.error('Contextual Gap Detected', {
+        description: `Please clarify: ${unanswered.map(q => q.field).join(', ')}`
       });
       return;
     }
@@ -57,66 +54,75 @@ export const RefinementEngine = () => {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to generate context');
+      if (!response.ok) throw new Error('API Fault');
 
       const data = await response.json();
-      
+
       setQuestions(data.questions || []);
       setDraftJson(data.draft_json || '');
       setConfidence(data.confidence || 0);
       setIsComplete(data.is_complete || false);
-      
+
       if (data.is_complete) {
         setStatus('complete');
-        toast.success('Architecture Finalized!', {
-          description: 'Your JSON structure is ready for export.'
+        toast.success('Architecture Locked', {
+          description: 'Blueprint is now production-ready.'
         });
       } else {
         setStatus('questioning');
-        toast.info('More Clarity Needed', {
-          description: `Iteration ${iteration_count + 1}: AI has generated follow-up questions.`
+        toast.info(`Iteration ${iteration_count + 1}`, {
+          description: `Architect is seeking deeper clarity on specific modules.`
         });
       }
     } catch (error) {
       console.error(error);
       setStatus('questioning');
-      toast.error('Analysis failed. Please try again.');
+      toast.error('Logical Fault', {
+        description: 'Unable to process updates. Please retry.'
+      });
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-white">Refinement Engine</h3>
-          <p className="text-zinc-500 text-sm italic">Iteration #{iteration_count + 1}</p>
+    <div className="flex flex-col gap-8 h-full">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-2xl font-black text-white tracking-tight uppercase">
+          Logic Refinement
+        </h3>
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-600 font-bold text-[10px] uppercase tracking-widest">
+            Iteration Sequence:
+          </span>
+          <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white text-[10px] font-black underline decoration-white/50 underline-offset-4">
+            #{iteration_count + 1}
+          </span>
         </div>
       </div>
 
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-4 custom-scrollbar min-h-0">
         <AnimatePresence mode="popLayout">
           {questions.map((question) => (
-            <QuestionCard 
-              key={question.id} 
-              question={question} 
-              onAnswer={handleAnswer} 
+            <QuestionCard
+              key={question.id}
+              question={question}
+              onAnswer={handleAnswer}
             />
           ))}
         </AnimatePresence>
       </div>
 
-      <div className="pt-4">
+      <div className="pt-4 border-t border-white/5">
         <Button
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold h-12 shadow-lg shadow-blue-500/20"
+          className="w-full gap-3 font-black text-xs uppercase tracking-[0.2em] shadow-2xl h-14 bg-white text-black hover:bg-white/90"
           onClick={handleSubmit}
           disabled={status === 'analyzing'}
         >
           {status === 'analyzing' ? (
-            <RefreshCcw className="mr-2 h-5 w-5 animate-spin" />
+            <RefreshCcw className="h-5 w-5 animate-spin" />
           ) : (
-            <Send className="mr-2 h-5 w-5" />
+            <Send className="h-4 w-4" />
           )}
-          Submit Context Updates
+          Push Architectural Updates
         </Button>
       </div>
     </div>

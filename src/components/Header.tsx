@@ -2,31 +2,35 @@
 
 import { useArchitectStore } from '@/store/useArchitectStore';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Bell } from 'lucide-react';
 
 export const Header = () => {
   const reset = useArchitectStore((state) => state.reset);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-black/50 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center font-bold text-white shadow-lg shadow-purple-500/20">
-            PA
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white sm:text-2xl">
-            PromptArchitect<span className="text-blue-400">.ai</span>
-          </span>
-        </div>
-        
-        <Button 
-          variant="outline" 
-          size="sm"
+    <header className="w-full h-24 flex items-center justify-between px-8 py-4">
+      <div className="flex flex-col">
+        <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+          Hi Architect
+        </h1>
+        <p className="text-zinc-600 text-sm font-medium">
+          Ready to refine some logic?
+        </p>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button className="p-3 rounded-2xl bg-white/5 border border-white/10 text-zinc-500 hover:text-white hover:bg-white/10 transition-all">
+          <Bell className="h-5 w-5" />
+        </button>
+
+        <Button
           onClick={reset}
-          className="border-zinc-700 bg-zinc-900/50 text-white hover:bg-zinc-800 hover:text-white"
+          className="rounded-2xl gap-2 font-bold px-6 bg-white text-black hover:bg-white/90 shadow-xl shadow-white/5"
         >
-          <Plus className="mr-2 h-4 w-4" />
-          New Session
+          Take Action
+          <div className="bg-black/10 p-1 rounded-lg">
+            <Plus className="h-4 w-4" />
+          </div>
         </Button>
       </div>
     </header>

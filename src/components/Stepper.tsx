@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Check, ClipboardList, HelpCircle, Rocket, Type } from 'lucide-react';
 import { AppStatus } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface StepperProps {
   currentStatus: AppStatus;
@@ -17,10 +18,22 @@ const steps = [
 
 export const Stepper = ({ currentStatus }: StepperProps) => {
   const currentIndex = steps.findIndex(s => s.id === currentStatus);
-  const activeIndex = currentIndex === -1 ? 1 : currentIndex; // handle analyzing/finalizing
+  const activeIndex = currentIndex === -1 ? 1 : currentIndex;
 
   return (
-    <div className="flex w-full items-center justify-between px-2 py-8">
+    <div className="flex w-full items-center p-6 rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-3xl shadow-2xl overflow-hidden relative">
+      {/* Background Rail */}
+      <div className="absolute left-[8%] right-[8%] top-1/2 -translate-y-1/2 h-[2px] bg-white/5" />
+
+      {/* Active Rail Overlay */}
+      <motion.div
+        initial={false}
+        animate={{
+          width: `${(activeIndex / (steps.length - 1)) * 84}%`
+        }}
+        className="absolute left-[8%] top-1/2 -translate-y-1/2 h-[2px] bg-gradient-to-r from-white to-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+      />
+
       {steps.map((step, index) => {
         const Icon = step.icon;
         const isActive = index <= activeIndex;
@@ -28,36 +41,46 @@ export const Stepper = ({ currentStatus }: StepperProps) => {
 
         return (
           <div key={step.id} className="relative flex flex-1 flex-col items-center">
-            {/* Connector Line */}
-            {index !== 0 && (
-              <div 
-                className={`absolute left-[-50%] top-5 h-[2px] w-full transition-colors duration-500 ${
-                  isActive ? 'bg-blue-500' : 'bg-zinc-800'
-                }`} 
-              />
-            )}
-            
-            {/* Step Circle */}
+            {/* Step Node */}
             <motion.div
               initial={false}
               animate={{
-                scale: isCurrent ? 1.2 : 1,
-                backgroundColor: isCurrent ? '#3b82f6' : isActive ? '#2563eb' : '#27272a',
+                background: isCurrent
+                  ? 'white'
+                  : isActive
+                    ? 'rgba(255,255,255,0.15)'
+                    : 'transparent',
+                borderColor: isActive ? 'white' : 'rgba(255,255,255,0.1)',
+                scale: isCurrent ? 1.1 : 1,
               }}
-              className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                isCurrent ? 'border-blue-300' : isActive ? 'border-blue-600' : 'border-zinc-700'
-              } text-white shadow-xl`}
+              className={cn(
+                "relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl border backdrop-blur-md transition-all duration-500",
+                isActive ? "shadow-[0_0_20px_rgba(255,255,255,0.1)]" : ""
+              )}
             >
               {isActive && index < activeIndex ? (
-                <Check className="h-5 w-5" />
+                <Check className={cn("h-6 w-6 text-black")} />
               ) : (
-                <Icon className="h-5 w-5" />
+                <Icon className={cn(
+                  "h-5 w-5 transition-colors duration-500",
+                  isCurrent ? "text-black" : isActive ? "text-white" : "text-zinc-600"
+                )} />
+              )}
+
+              {/* Pulse effect for current step */}
+              {isCurrent && (
+                <motion.div
+                  className="absolute inset-0 rounded-2xl border-2 border-white"
+                  animate={{ scale: [1, 1.4], opacity: [0.3, 0] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                />
               )}
             </motion.div>
-            
-            <span className={`mt-2 text-xs font-medium uppercase tracking-wider ${
-              isActive ? 'text-blue-400' : 'text-zinc-500'
-            }`}>
+
+            <span className={cn(
+              "mt-3 text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-500",
+              isActive ? "text-white" : "text-zinc-700"
+            )}>
               {step.label}
             </span>
           </div>
