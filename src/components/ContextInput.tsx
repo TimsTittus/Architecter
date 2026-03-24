@@ -34,34 +34,34 @@ export const ContextInput = () => {
           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Logic Architect</span>
         </div>
 
-        <h2 className="text-5xl md:text-6xl font-black text-white leading-[1.1] tracking-tighter max-w-2xl">
+        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tighter max-w-2xl">
           Build Your JSON <span className="text-gradient">Blueprint.</span>
         </h2>
-        <p className="text-zinc-500 text-lg font-medium max-w-xl">
+        <p className="text-zinc-500 text-base md:text-lg font-medium max-w-xl">
           Paste your requirements or messy ideas. Architect will extract the underlying logic and architect a production-ready prompt.
         </p>
       </div>
 
       <div className="relative group">
         <div className="absolute -inset-1 bg-white/5 rounded-[40px] blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
-        <div className="relative flex flex-col gap-6 p-8 rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-3xl shadow-2xl">
+        <div className="relative flex flex-col gap-4 md:gap-6 p-4 md:p-8 rounded-[24px] md:rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-3xl shadow-2xl">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="e.g., I want to build a user management system with roles, permissions, and session tracking..."
-            className="min-h-[300px] bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-white/20 resize-none text-xl font-medium leading-relaxed custom-scrollbar px-6 py-4 transition-all"
+            className="min-h-[200px] md:min-h-[300px] bg-white/5 border border-white/10 rounded-xl md:rounded-2xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-white/20 resize-none text-lg md:text-xl font-medium leading-relaxed custom-scrollbar px-4 md:px-6 py-3 md:py-4 transition-all"
           />
 
-          <div className="flex items-center justify-between pt-4 border-t border-white/10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10">
             <div className="flex gap-4">
               <div className="flex -space-x-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-8 w-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center">
-                    <Zap className="h-4 w-4 text-zinc-500" />
+                  <div key={i} className="h-6 w-6 md:h-8 md:w-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center">
+                    <Zap className="h-3 w-3 md:h-4 md:w-4 text-zinc-500" />
                   </div>
                 ))}
               </div>
-              <span className="text-xs text-zinc-600 flex items-center font-bold uppercase tracking-tighter">
+              <span className="text-[10px] md:text-xs text-zinc-600 flex items-center font-bold uppercase tracking-tighter">
                 Architecture Lab v1.0
               </span>
             </div>
@@ -70,7 +70,7 @@ export const ContextInput = () => {
               size="lg"
               onClick={handleAnalyze}
               disabled={!input.trim() || isAnalyzing}
-              className="gap-3 px-8 rounded-2xl group/btn bg-white text-black hover:bg-white/90 shadow-2xl shadow-white/5"
+              className="w-full sm:w-auto gap-3 px-8 rounded-xl md:rounded-2xl group/btn bg-white text-black hover:bg-white/90 shadow-2xl shadow-white/5 h-12 md:h-14"
             >
               Analyze Logic
               <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />

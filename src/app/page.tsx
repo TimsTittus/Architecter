@@ -69,7 +69,7 @@ export default function Home() {
         <Header />
         <Toaster position="bottom-right" richColors={false} theme="dark" />
 
-        <main className="flex-1 px-8 py-6 max-w-[1600px] mx-auto w-full">
+        <main className="flex-1 px-4 md:px-8 py-6 max-w-[1600px] mx-auto w-full">
           <AnimatePresence mode="wait">
             {status === 'idle' ? (
               <motion.div
@@ -77,7 +77,7 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="h-full flex items-center justify-center py-20"
+                className="h-full flex items-center justify-center py-10 md:py-20"
               >
                 <div className="w-full max-w-2xl">
                   <ContextInput />
@@ -88,37 +88,37 @@ export default function Home() {
                 key="dashboard"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-8"
+                className="space-y-6 md:space-y-8"
               >
                 {/* Top Stats/Progress Row */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
                   <div className="xl:col-span-2">
                     <Stepper currentStatus={status} />
                   </div>
-                  <div>
+                  <div className="h-auto">
                     <ConfidenceMeter confidence={confidence} />
                   </div>
                 </div>
 
                 {/* Main Action Area */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start pb-20">
                   {/* Left Column: Logic Flow (7/12) */}
                   <div className="lg:col-span-7 space-y-6">
                     {status === 'analyzing' ? (
-                      <div className="flex flex-col items-center justify-center p-20 space-y-6 rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-2xl">
+                      <div className="flex flex-col items-center justify-center p-10 md:p-20 space-y-6 rounded-[24px] md:rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-2xl">
                         <div className="relative">
-                          <Rocket className="h-16 w-16 text-white animate-pulse" />
+                          <Rocket className="h-12 w-12 md:h-16 md:w-16 text-white animate-pulse" />
                           <motion.div
-                            className="absolute inset-0 h-16 w-16 rounded-full border-4 border-white/50"
+                            className="absolute inset-0 h-12 w-12 md:h-16 md:w-16 rounded-full border-4 border-white/50"
                             animate={{ scale: [1, 2], opacity: [0.3, 0] }}
                             transition={{ repeat: Infinity, duration: 2 }}
                           />
                         </div>
                         <div className="text-center">
-                          <h3 className="text-2xl font-bold text-white mb-2">
+                          <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
                             Architecting Logic...
                           </h3>
-                          <p className="text-zinc-500 text-sm max-w-xs mx-auto italic">
+                          <p className="text-zinc-500 text-xs md:text-sm max-w-xs mx-auto italic">
                             Architect is analyzing your requirements and identifying optimal data structures.
                           </p>
                         </div>
@@ -129,7 +129,7 @@ export default function Home() {
                   </div>
 
                   {/* Right Column: Live Preview (5/12) */}
-                  <div className="lg:col-span-5 h-[calc(100vh-250px)] lg:sticky lg:top-8">
+                  <div className="lg:col-span-5 min-h-[400px] lg:h-[calc(100vh-250px)] lg:sticky lg:top-8">
                     <JsonPreview />
                   </div>
                 </div>

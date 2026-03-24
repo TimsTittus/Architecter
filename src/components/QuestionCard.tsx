@@ -21,7 +21,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       className={cn(
-        "relative p-6 rounded-3xl bg-white/5 border transition-all duration-500 overflow-hidden group",
+        "relative p-4 md:p-6 rounded-[24px] md:rounded-3xl bg-white/5 border transition-all duration-500 overflow-hidden group",
         isAnswered ? "border-white/40 bg-white/10 shadow-[0_0_30px_rgba(255,255,255,0.05)]" : "border-white/5 hover:border-white/10"
       )}
     >
@@ -38,10 +38,10 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+          <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] text-zinc-500">
             Context Node: {question.field}
           </span>
-          <h4 className="text-lg font-bold text-white leading-snug pr-8">
+          <h4 className="text-base md:text-lg font-bold text-white leading-snug pr-8">
             {question.question}
           </h4>
         </div>
@@ -50,7 +50,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
           {question.type === 'text' && (
             <Input
               placeholder="Architectural spec..."
-              className="bg-black/20 border-white/5 text-white h-12 rounded-xl focus:ring-white/20 text-base"
+              className="bg-black/20 border-white/5 text-white h-10 md:h-12 rounded-xl focus:ring-white/20 text-sm md:text-base px-3 md:px-4"
               onChange={(e) => onAnswer(question.id, e.target.value)}
               value={typeof question.answer === 'string' ? question.answer : ''}
             />
@@ -62,7 +62,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
                 <Button
                   key={option}
                   variant={question.answer === option ? "default" : "secondary"}
-                  className="rounded-xl h-10 text-[10px] uppercase font-black tracking-widest"
+                  className="rounded-xl h-9 md:h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest px-2"
                   onClick={() => onAnswer(question.id, option)}
                 >
                   {option}
@@ -80,7 +80,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
                 <Button
                   key={String(opt.val)}
                   variant={question.answer === opt.val ? "default" : "secondary"}
-                  className="flex-1 rounded-xl h-10 text-[10px] uppercase font-black tracking-widest"
+                  className="flex-1 rounded-xl h-9 md:h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest"
                   onClick={() => onAnswer(question.id, opt.val)}
                 >
                   {opt.label}

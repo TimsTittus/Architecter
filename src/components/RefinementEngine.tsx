@@ -84,9 +84,9 @@ export const RefinementEngine = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8 h-full">
+    <div className="flex flex-col gap-6 md:gap-8 h-full">
       <div className="flex flex-col gap-1">
-        <h3 className="text-2xl font-black text-white tracking-tight uppercase">
+        <h3 className="text-xl md:text-2xl font-black text-white tracking-tight uppercase">
           Logic Refinement
         </h3>
         <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export const RefinementEngine = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-4 custom-scrollbar min-h-0">
+      <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 md:pr-4 custom-scrollbar min-h-0">
         <AnimatePresence mode="popLayout">
           {questions.map((question) => (
             <QuestionCard
@@ -113,7 +113,7 @@ export const RefinementEngine = () => {
 
       <div className="pt-4 border-t border-white/5">
         <Button
-          className="w-full gap-3 font-black text-xs uppercase tracking-[0.2em] shadow-2xl h-14 bg-white text-black hover:bg-white/90"
+          className="w-full gap-3 font-black text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-2xl h-12 md:h-14 bg-white text-black hover:bg-white/90"
           onClick={handleSubmit}
           disabled={status === 'analyzing'}
         >

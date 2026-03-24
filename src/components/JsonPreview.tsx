@@ -44,41 +44,41 @@ export const JsonPreview = () => {
   };
 
   return (
-    <div className="flex flex-col h-full rounded-[32px] bg-white/5 border border-white/10 shadow-2xl overflow-hidden backdrop-blur-3xl group">
+    <div className="flex flex-col h-full rounded-[24px] md:rounded-[32px] bg-white/5 border border-white/10 shadow-2xl overflow-hidden backdrop-blur-3xl group">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
+      <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/10 bg-white/5">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
-            <FileJson className="h-5 w-5 text-zinc-400" />
+          <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
+            <FileJson className="h-4 w-4 md:h-5 md:w-5 text-zinc-400" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-black uppercase tracking-widest text-white">Live Blueprint</span>
-            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">JSON Output</span>
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white">Live Blueprint</span>
+            <span className="text-[8px] md:text-[10px] text-zinc-600 font-bold uppercase tracking-widest">JSON Output</span>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-1 md:gap-2">
           <Button
             variant="secondary"
             size="icon-sm"
-            className="rounded-xl"
+            className="h-8 w-8 md:h-9 md:w-9 rounded-lg md:rounded-xl"
             onClick={handleCopy}
           >
-            {copied ? <Check className="h-4 w-4 text-white" /> : <Copy className="h-4 w-4" />}
+            {copied ? <Check className="h-3 w-3 md:h-4 md:w-4 text-white" /> : <Copy className="h-3 w-3 md:h-4 md:w-4" />}
           </Button>
           <Button
             variant="secondary"
             size="icon-sm"
-            className="rounded-xl"
+            className="h-8 w-8 md:h-9 md:w-9 rounded-lg md:rounded-xl"
             onClick={handleDownload}
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-3 w-3 md:h-4 md:w-4" />
           </Button>
         </div>
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-auto p-6 custom-scrollbar bg-black/40">
+      <div className="flex-1 overflow-auto p-4 md:p-6 custom-scrollbar bg-black/40">
         <AnimatePresence mode="wait">
           <motion.div
             key={formattedJson()}
@@ -106,7 +106,7 @@ export const JsonPreview = () => {
 
       {/* Footer / Status Label */}
       <div className={cn(
-        "px-6 py-4 flex items-center justify-between transition-colors duration-500",
+        "px-4 md:px-6 py-3 md:py-4 flex items-center justify-between transition-colors duration-500",
         is_complete ? "bg-white/10" : "bg-white/5"
       )}>
         <div className="flex items-center gap-2">

@@ -22,7 +22,7 @@ export const ConfidenceMeter = ({ confidence }: ConfidenceMeterProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-6 rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-3xl shadow-2xl h-full justify-center">
+    <div className="flex flex-col gap-4 p-4 md:p-6 rounded-[24px] md:rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-3xl shadow-2xl h-full justify-center">
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">
