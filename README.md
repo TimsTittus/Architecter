@@ -4,15 +4,7 @@
 
 ---
 
-## 🎨 Design Philosophy: Grayscale Glassmorphism
-Architect.Ai features a premium, monochromatic design system optimized for high-concentration architectural work.
-- **Visuals**: Deep black backgrounds with heavy "White Glass" blurs (`backdrop-blur-3xl`).
-- **Accents**: High-contrast silver and zinc tones, eliminating color fatigue.
-- **Physics**: Fluid micro-animations powered by `framer-motion` for a responsive, high-fidelity feel.
-
----
-
-## 🚀 Core Features
+## Core Features
 
 - **Recursive Clarification Loop**: When logic gaps are detected, the AI generates context-aware questions (text/select/boolean) to iteratively refine the output.
 - **Dual-Model Fallback Engine**: Primary logic handled by `gemini-2.5-flash` with seamless failover to `gemini-2.0-flash`.
@@ -85,6 +77,3 @@ bun run build
 ```
 
 ---
-
-## 📄 License
-Internal Development - **Architect.ai Architecture Lab**.
