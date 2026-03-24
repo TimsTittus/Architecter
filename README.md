@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏗️ Architect.Ai — Recursive Logic Engine
 
-## Getting Started
+**Architect.Ai** is a high-performance, AI-driven development environment that transforms raw, unstructured requirements into production-ready JSON blueprints. It employs a recursive clarifying loop to extract deep logical constraints and structural dependencies from minimal human input.
 
-First, run the development server:
+---
+
+## 🎨 Design Philosophy: Grayscale Glassmorphism
+Architect.Ai features a premium, monochromatic design system optimized for high-concentration architectural work.
+- **Visuals**: Deep black backgrounds with heavy "White Glass" blurs (`backdrop-blur-3xl`).
+- **Accents**: High-contrast silver and zinc tones, eliminating color fatigue.
+- **Physics**: Fluid micro-animations powered by `framer-motion` for a responsive, high-fidelity feel.
+
+---
+
+## 🚀 Core Features
+
+- **Recursive Clarification Loop**: When logic gaps are detected, the AI generates context-aware questions (text/select/boolean) to iteratively refine the output.
+- **Dual-Model Fallback Engine**: Primary logic handled by `gemini-2.5-flash` with seamless failover to `gemini-2.0-flash`.
+- **Live Blueprint Sync**: Real-time syntax-highlighted JSON preview that updates as you resolve architectural ambiguities.
+- **Architectural Metrics**: Integrated Confidence Meter tracking context completeness and an animated Stepper for logic flow visualization.
+
+---
+
+## 🛠️ Technical Stack
+
+- **Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
+- **Runtime**: [Node.js](https://nodejs.org/) (for stable AI SDK compatibility)
+- **AI Engine**: [Google Gemini SDK](https://ai.google.dev/) (`@google/genai`)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **UI Components**: [Shadcn UI](https://ui.shadcn.com/) (Customized Monochromatic Suite)
+
+---
+
+## 📂 Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+src/
+├── app/
+│   ├── api/generate/route.ts  # Recursive AI Logic Engine
+│   ├── globals.css            # Grayscale Design System & Glassmorphism
+│   ├── layout.tsx             # Root Provider & Monochrome Toaster
+│   └── page.tsx               # Centered Dashboard Layout
+├── components/
+│   ├── ConfidenceMeter.tsx    # Precision tracking (Grayscale)
+│   ├── ContextInput.tsx       # Entry point for raw requirements
+│   ├── JsonPreview.tsx        # High-fidelity code output
+│   ├── RefinementEngine.tsx   # Recursive question handler
+│   └── Stepper.tsx            # Animated logic sequence
+├── lib/
+│   ├── gemini.ts              # Centralized AI Configuration
+│   └── utils.ts               # Tailwinds merge & class utilities
+└── store/
+    └── useArchitectStore.ts   # Persistant session & logic state
+```
+
+---
+
+## 🚦 Getting Started
+
+### 1. Prerequisites
+- **Node.js** (v18+)
+- **Bun** or **NPM**
+- **Gemini API Key**: Obtain from [Google AI Studio](https://aistudio.google.com/apikey).
+
+### 2. Environment Setup
+Create a `.env.local` in the root directory:
+```env
+GEMINI_API_KEY=your_key_here
+```
+
+### 3. Installation & Local Development
+```bash
+# Install dependencies
+bun install
+
+# Start development server
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Build for Production
+```bash
+bun run build
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+Internal Development - **Architect.ai Architecture Lab**.
