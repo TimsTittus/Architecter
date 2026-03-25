@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AppStatus, Question, Session } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-export const MAX_ITERATIONS = 4; // Total 5 rounds (0 to 4)
+export const MAX_ITERATIONS = 4;
 
 interface ArchitectState extends Session {
   iteration_count: number;
@@ -13,7 +13,7 @@ interface ArchitectState extends Session {
   setDraftJson: (json: string) => void;
   setConfidence: (confidence: number) => void;
   setIsComplete: (isComplete: boolean) => void;
-  addToHistory: (entry: any) => void;
+  addToHistory: (entry: import('@/types').HistoryEntry) => void;
   reset: () => void;
   incrementIteration: () => void;
 }
@@ -37,32 +37,32 @@ export const useArchitectStore = create<ArchitectState>()(
       ...initialState,
 
       setRawContext: (raw_context) => set({ raw_context }),
-      
+
       setStatus: (status) => set({ status }),
-      
+
       setQuestions: (questions) => set({ questions }),
-      
-      answerQuestion: (id, answer) => 
+
+      answerQuestion: (id, answer) =>
         set((state) => ({
-          questions: state.questions.map((q) => 
+          questions: state.questions.map((q) =>
             q.id === id ? { ...q, answer } : q
           )
         })),
-      
+
       setDraftJson: (draft_json) => set({ draft_json }),
-      
+
       setConfidence: (confidence) => set({ confidence }),
-      
+
       setIsComplete: (is_complete) => set({ is_complete }),
-      
-      addToHistory: (entry) => 
-        set((state) => ({ 
-          history: [...state.history, entry] 
+
+      addToHistory: (entry) =>
+        set((state) => ({
+          history: [...state.history, entry]
         })),
-      
-      incrementIteration: () => 
-        set((state) => ({ 
-          iteration_count: state.iteration_count + 1 
+
+      incrementIteration: () =>
+        set((state) => ({
+          iteration_count: state.iteration_count + 1
         })),
 
       reset: () => set({ ...initialState, session_id: uuidv4() }),

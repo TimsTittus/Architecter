@@ -90,17 +90,18 @@ export async function POST(req: NextRequest) {
     try {
       // Primary Attempt
       result = await attemptGeneration(PRIMARY_MODEL, prompt);
-    } catch (primaryError: any) {
-      console.warn(`[API] Primary model (${PRIMARY_MODEL}) failed:`, primaryError.message);
+    } catch (primaryError: unknown) {
+      console.warn(`[API] Primary model (${PRIMARY_MODEL}) failed:`, primaryError instanceof Error ? primaryError.message : String(primaryError));
       
       // Fallback Attempt
       try {
         result = await attemptGeneration(FALLBACK_MODEL, prompt);
         console.log(`[API] Successfully fell back to ${FALLBACK_MODEL}`);
-      } catch (fallbackError: any) {
+      } catch (fallbackError: unknown) {
         console.error('[API] Both primary and fallback models failed.');
         
-        const isQuota = fallbackError.status === 429 || fallbackError.message?.includes('429');
+        const errorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        const isQuota = errorMessage.includes('429');
         
         return NextResponse.json({
           is_complete: false,
@@ -125,8 +126,9 @@ export async function POST(req: NextRequest) {
     const parsedData = parseGeminiResponse(responseText);
 
     return NextResponse.json(parsedData);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Critical handler error:', error);
-    return NextResponse.json({ error: 'Critical server error', details: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: 'Critical server error', details: errorMessage }, { status: 500 });
   }
 }

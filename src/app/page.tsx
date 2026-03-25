@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useArchitectStore } from '@/store/useArchitectStore';
 import { Header } from '@/components/Header';
 import { Stepper } from '@/components/Stepper';
@@ -24,6 +24,11 @@ export default function Home() {
     iteration_count,
     confidence
   } = useArchitectStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const initialAnalysis = async () => {
@@ -71,7 +76,7 @@ export default function Home() {
 
         <main className="flex-1 px-4 md:px-8 py-6 max-w-[1600px] mx-auto w-full">
           <AnimatePresence mode="wait">
-            {status === 'idle' ? (
+            {!mounted || status === 'idle' ? (
               <motion.div
                 key="landing"
                 initial={{ opacity: 0, scale: 0.95 }}

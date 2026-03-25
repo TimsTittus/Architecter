@@ -43,14 +43,18 @@ export const Stepper = ({ currentStatus }: StepperProps) => {
           <div key={step.id} className="relative flex flex-1 flex-col items-center">
             {/* Step Node */}
             <motion.div
-              initial={false}
+              initial={{
+                background: 'rgba(255,255,255,0)',
+                borderColor: 'rgba(255,255,255,0.1)',
+                scale: 1
+              }}
               animate={{
                 background: isCurrent
-                  ? 'white'
+                  ? 'rgba(255,255,255,1)'
                   : isActive
                     ? 'rgba(255,255,255,0.15)'
-                    : 'transparent',
-                borderColor: isActive ? 'white' : 'rgba(255,255,255,0.1)',
+                    : 'rgba(255,255,255,0)',
+                borderColor: isActive ? '#ffffff' : 'rgba(255,255,255,0.1)',
                 scale: isCurrent ? 1.1 : 1,
               }}
               className={cn(

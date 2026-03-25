@@ -39,9 +39,11 @@ export const RefinementEngine = () => {
     incrementIteration();
 
     try {
-      const answers: Record<string, any> = {};
+      const answers: Record<string, string | boolean> = {};
       questions.forEach(q => {
-        answers[q.field] = q.answer;
+        if (q.answer !== undefined) {
+          answers[q.field] = q.answer;
+        }
       });
 
       const response = await fetch('/api/generate', {
@@ -68,17 +70,34 @@ export const RefinementEngine = () => {
         toast.success('Architecture Locked', {
           description: 'Blueprint is now production-ready.'
         });
+
+        // Save to history if logged in
+        try {
+          await fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              rawInput: raw_context,
+              finalPrompt: data.draft_json,
+              draftJson: data.draft_json,
+              confidence: data.confidence,
+              iterationCount: iteration_count + 1
+            })
+          });
+        } catch (hError: unknown) {
+          console.error('Failed to save history:', hError instanceof Error ? hError.message : String(hError));
+        }
       } else {
         setStatus('questioning');
         toast.info(`Iteration ${iteration_count + 1}`, {
           description: `Architect is seeking deeper clarity on specific modules.`
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
       setStatus('questioning');
       toast.error('Logical Fault', {
-        description: 'Unable to process updates. Please retry.'
+        description: error instanceof Error ? error.message : 'Unable to process updates. Please retry.'
       });
     }
   };

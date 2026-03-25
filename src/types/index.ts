@@ -11,13 +11,20 @@ export interface Question {
 
 export type AppStatus = 'idle' | 'analyzing' | 'questioning' | 'finalizing' | 'complete';
 
+export interface HistoryEntry {
+  timestamp: number;
+  input: string;
+  output: string;
+  confidence: number;
+}
+
 export interface Session {
   session_id: string;
   raw_context: string;
-  refined_data: Record<string, any>;
+  refined_data: Record<string, unknown>;
   questions: Question[];
   status: AppStatus;
-  history: any[];
+  history: HistoryEntry[];
   draft_json: string;
   is_complete: boolean;
   confidence: number;
@@ -25,7 +32,7 @@ export interface Session {
 
 export interface GenerateRequest {
   user_input: string;
-  previous_responses?: any;
+  previous_responses?: Record<string, string | boolean>;
   iteration_count: number;
 }
 
