@@ -19,9 +19,7 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        <button className="p-2 md:p-3 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 text-zinc-500 hover:text-white hover:bg-white/10 transition-all">
-          <Bell className="h-4 w-4 md:h-5 md:w-5" />
-        </button>
+
 
         <Button
           onClick={reset}

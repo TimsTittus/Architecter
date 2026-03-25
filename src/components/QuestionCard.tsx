@@ -27,7 +27,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
     >
       {/* Visual Indicator of completion */}
       {isAnswered && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="absolute top-4 right-4"
@@ -55,14 +55,14 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
               value={typeof question.answer === 'string' ? question.answer : ''}
             />
           )}
-          
+
           {question.type === 'select' && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {question.options?.map((option) => (
                 <Button
                   key={option}
                   variant={question.answer === option ? "default" : "secondary"}
-                  className="rounded-xl h-9 md:h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest px-2"
+                  className="rounded-xl h-auto min-h-9 md:min-h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest px-4 py-2 text-wrap text-center"
                   onClick={() => onAnswer(question.id, option)}
                 >
                   {option}

@@ -23,7 +23,7 @@ export const Stepper = ({ currentStatus }: StepperProps) => {
   return (
     <div className="flex w-full items-center p-4 md:p-6 rounded-[24px] md:rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-3xl shadow-2xl overflow-hidden relative">
       {/* Background Rail */}
-      <div className="absolute left-[8%] right-[8%] top-1/2 -translate-y-1/2 h-[1px] md:h-[2px] bg-white/5" />
+      <div className="absolute left-[8%] right-[8%] top-1/2 -translate-y-1/2 h-[1px] md:h-[2px] bg-white/5 z-0" />
 
       {/* Active Rail Overlay */}
       <motion.div
@@ -31,7 +31,7 @@ export const Stepper = ({ currentStatus }: StepperProps) => {
         animate={{
           width: `${(activeIndex / (steps.length - 1)) * 84}%`
         }}
-        className="absolute left-[8%] top-1/2 -translate-y-1/2 h-[1px] md:h-[2px] bg-gradient-to-r from-white to-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+        className="absolute left-[8%] top-1/2 -translate-y-1/2 h-[1px] md:h-[2px] bg-gradient-to-r from-white to-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] z-0"
       />
 
       {steps.map((step, index) => {
