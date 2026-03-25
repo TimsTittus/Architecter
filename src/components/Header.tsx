@@ -7,6 +7,7 @@ import { signIn, signOut, useSession } from '@/lib/auth-client';
 import { useState, useEffect } from 'react';
 import { HistorySidebar } from './HistorySidebar';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 export const Header = () => {
   const reset = useArchitectStore((state) => state.reset);
@@ -19,10 +20,15 @@ export const Header = () => {
   }, []);
 
   const handleLogin = async () => {
-    await signIn.social({
-      provider: 'google',
-      callbackURL: window.location.origin,
-    });
+    try {
+      await signIn.social({
+        provider: 'google',
+        callbackURL: window.location.origin,
+      });
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast.error('Failed to initiate login. Please try again.');
+    }
   };
 
   return (
@@ -42,7 +48,7 @@ export const Header = () => {
              <Button
               variant="secondary"
               size="icon"
-              className="rounded-xl h-9 w-9 md:h-11 md:w-11 bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10"
+              className="rounded-xl h-10 w-10 md:h-11 md:w-11 bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10"
               onClick={() => setIsHistoryOpen(true)}
             >
               <History className="h-4 w-4 md:h-5 md:w-5" />
@@ -71,7 +77,7 @@ export const Header = () => {
         ) : (
           <Button
             variant="secondary"
-            className="rounded-xl md:rounded-2xl gap-2 font-bold px-3 md:px-5 bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs md:text-sm h-9 md:h-11"
+            className="rounded-xl md:rounded-2xl gap-2 font-bold px-3 md:px-5 bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs md:text-sm h-10 md:h-11"
             onClick={handleLogin}
             suppressHydrationWarning
           >
@@ -86,7 +92,7 @@ export const Header = () => {
 
         <Button
           onClick={reset}
-          className="rounded-xl md:rounded-2xl gap-2 font-bold px-4 md:px-6 bg-white text-black hover:bg-white/90 shadow-xl shadow-white/5 text-xs md:text-sm h-9 md:h-11"
+          className="rounded-xl md:rounded-2xl gap-2 font-bold px-4 md:px-6 bg-white text-black hover:bg-white/90 shadow-xl shadow-white/5 text-xs md:text-sm h-10 md:h-11"
         >
           <span className="hidden sm:inline">Take Action</span>
           <span className="sm:hidden">Action</span>
