@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AppStatus, Question, Session } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+export const MAX_ITERATIONS = 4; // Total 5 rounds (0 to 4)
 
 interface ArchitectState extends Session {
   iteration_count: number;

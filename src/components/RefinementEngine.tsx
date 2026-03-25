@@ -83,18 +83,34 @@ export const RefinementEngine = () => {
     }
   };
 
+  const MAX_ITERATIONS = 4;
+  const currentRound = iteration_count + 1;
+  const totalRounds = MAX_ITERATIONS + 1;
+  const roundsLeft = Math.max(0, totalRounds - currentRound);
+
   return (
     <div className="flex flex-col gap-6 md:gap-8 h-full">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-xl md:text-2xl font-black text-white tracking-tight uppercase">
-          Logic Refinement
-        </h3>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl md:text-2xl font-black text-white tracking-tight uppercase">
+            Logic Refinement
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-600 font-bold text-[10px] uppercase tracking-widest">
+              Rounds Left:
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white text-[10px] font-black">
+              {roundsLeft}
+            </span>
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
           <span className="text-zinc-600 font-bold text-[10px] uppercase tracking-widest">
             Iteration Sequence:
           </span>
           <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white text-[10px] font-black underline decoration-white/50 underline-offset-4">
-            #{iteration_count + 1}
+            Round {currentRound} of {totalRounds}
           </span>
         </div>
       </div>
