@@ -30,6 +30,7 @@ OUTPUT FORMAT (Strict JSON):
     }
   ],
   "draft_json": "Stringified JSON of the schema/prompt",
+  "draft_english": "A detailed, structured natural language (English) version of the blueprint for human reading",
   "confidence": number
 }
 
@@ -57,6 +58,7 @@ function parseGeminiResponse(text: string) {
         }
       ],
       draft_json: "{}",
+      draft_english: "",
       confidence: 0
     };
   }
@@ -117,6 +119,7 @@ export async function POST(req: NextRequest) {
             }
           ],
           draft_json: "{}",
+          draft_english: "",
           confidence: 0
         });
       }

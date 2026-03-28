@@ -22,7 +22,8 @@ export default function Home() {
     setConfidence,
     setIsComplete,
     iteration_count,
-    confidence
+    confidence,
+    setDraftEnglish
   } = useArchitectStore();
   const [mounted, setMounted] = useState(false);
 
@@ -49,6 +50,7 @@ export default function Home() {
 
           setQuestions(data.questions || []);
           setDraftJson(data.draft_json || '');
+          setDraftEnglish(data.draft_english || '');
           setConfidence(data.confidence || 0);
           setIsComplete(data.is_complete || false);
 

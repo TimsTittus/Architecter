@@ -11,6 +11,7 @@ interface ArchitectState extends Session {
   setQuestions: (questions: Question[]) => void;
   answerQuestion: (id: string, answer: string | boolean) => void;
   setDraftJson: (json: string) => void;
+  setDraftEnglish: (english: string) => void;
   setConfidence: (confidence: number) => void;
   setIsComplete: (isComplete: boolean) => void;
   addToHistory: (entry: import('@/types').HistoryEntry) => void;
@@ -26,6 +27,7 @@ const initialState = {
   status: 'idle' as AppStatus,
   history: [],
   draft_json: '',
+  draft_english: '',
   is_complete: false,
   confidence: 0,
   iteration_count: 0,
@@ -50,6 +52,7 @@ export const useArchitectStore = create<ArchitectState>()(
         })),
 
       setDraftJson: (draft_json) => set({ draft_json }),
+      setDraftEnglish: (draft_english) => set({ draft_english }),
 
       setConfidence: (confidence) => set({ confidence }),
 

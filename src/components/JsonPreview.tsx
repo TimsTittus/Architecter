@@ -11,8 +11,9 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const JsonPreview = () => {
-  const { draft_json, is_complete } = useArchitectStore();
+  const { draft_json, draft_english, is_complete } = useArchitectStore();
   const [copied, setCopied] = useState(false);
+  const [view, setView] = useState<'json' | 'english'>('json');
 
   const formattedJson = () => {
     try {
@@ -25,10 +26,11 @@ export const JsonPreview = () => {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(formattedJson());
+    const textToCopy = view === 'json' ? formattedJson() : draft_english || 'No English blueprint available yet.';
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     toast.success('Blueprint Copied', {
-      description: 'JSON schema is ready for your LLM context.'
+      description: view === 'json' ? 'JSON schema is ready.' : 'English blueprint is ready.'
     });
     setTimeout(() => setCopied(false), 2000);
   };
@@ -52,12 +54,36 @@ export const JsonPreview = () => {
             <FileJson className="h-4 w-4 md:h-5 md:w-5 text-zinc-400" />
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white">Live Blueprint</span>
-            <span className="text-[8px] md:text-[10px] text-zinc-600 font-bold uppercase tracking-widest">JSON Output</span>
+            <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white">
+              {view === 'json' ? 'Live Blueprint' : 'Logic Flow'}
+            </span>
+            <span className="text-[8px] md:text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
+              {view === 'json' ? 'JSON Output' : 'English Overview'}
+            </span>
           </div>
         </div>
 
-        <div className="flex gap-1 md:gap-2">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center bg-black/40 p-1 rounded-xl border border-white/10">
+            <button
+              onClick={() => setView('json')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all",
+                view === 'json' ? "bg-white text-black shadow-lg" : "text-zinc-500 hover:text-white"
+              )}
+            >
+              JSON
+            </button>
+            <button
+              onClick={() => setView('english')}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all",
+                view === 'english' ? "bg-white text-black shadow-lg" : "text-zinc-500 hover:text-white"
+              )}
+            >
+              English
+            </button>
+          </div>
           <Button
             variant="secondary"
             size="icon-sm"
@@ -81,25 +107,34 @@ export const JsonPreview = () => {
       <div className="flex-1 overflow-auto p-4 md:p-6 custom-scrollbar bg-black/40">
         <AnimatePresence mode="wait">
           <motion.div
-            key={formattedJson()}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            key={view === 'json' ? formattedJson() : draft_english}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             className="h-full"
           >
-            <SyntaxHighlighter
-              language="json"
-              style={vscDarkPlus}
-              customStyle={{
-                background: 'transparent',
-                padding: 0,
-                margin: 0,
-                fontSize: '14px',
-                lineHeight: '1.7',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {formattedJson()}
-            </SyntaxHighlighter>
+            {view === 'json' ? (
+              <SyntaxHighlighter
+                language="json"
+                style={vscDarkPlus}
+                customStyle={{
+                  background: 'transparent',
+                  padding: 0,
+                  margin: 0,
+                  fontSize: '14px',
+                  lineHeight: '1.7',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {formattedJson()}
+              </SyntaxHighlighter>
+            ) : (
+              <div className="prose prose-invert max-w-none">
+                <div className="text-zinc-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium">
+                  {draft_english || '// Architectural overview is being drafted...'}
+                </div>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

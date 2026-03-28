@@ -20,6 +20,7 @@ export const Header = () => {
   }, []);
 
   const handleLogin = async () => {
+    console.log('Initiating login...');
     try {
       await signIn.social({
         provider: 'google',
@@ -43,50 +44,60 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        {mounted && session ? (
-          <div className="flex items-center gap-2 md:gap-3">
-             <Button
-              variant="secondary"
-              size="icon"
-              className="rounded-xl h-10 w-10 md:h-11 md:w-11 bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10"
-              onClick={() => setIsHistoryOpen(true)}
-            >
-              <History className="h-4 w-4 md:h-5 md:w-5" />
-            </Button>
-            
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 py-1 md:px-3 md:py-1.5 rounded-xl md:rounded-2xl">
-              <div className="h-6 w-6 md:h-8 md:w-8 rounded-full overflow-hidden border border-white/20 relative">
-                <Image 
-                  src={session.user.image || ''} 
-                  alt={session.user.name || 'User avatar'} 
-                  fill
-                  className="object-cover" 
-                />
-              </div>
-              <span className="hidden sm:inline text-[10px] md:text-xs font-bold text-white max-w-[100px] truncate">
-                {session.user.name}
-              </span>
-              <button 
-                onClick={() => signOut()}
-                className="text-zinc-500 hover:text-red-400 transition-colors ml-1"
+        {mounted ? (
+          session ? (
+            <div className="flex items-center gap-2 md:gap-3">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="rounded-xl h-10 w-10 md:h-11 md:w-11 bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10"
+                onClick={() => setIsHistoryOpen(true)}
               >
-                <LogOut className="h-3 w-3 md:h-4 md:w-4" />
-              </button>
+                <History className="h-4 w-4 md:h-5 md:w-5" />
+              </Button>
+
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-2 py-1 md:px-3 md:py-1.5 rounded-xl md:rounded-2xl">
+                <div className="h-6 w-6 md:h-8 md:w-8 rounded-full overflow-hidden border border-white/20 relative">
+                  <Image
+                    src={session.user.image || ''}
+                    alt={session.user.name || 'User avatar'}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <span className="hidden sm:inline text-[10px] md:text-xs font-bold text-white max-w-[100px] truncate">
+                  {session.user.name}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="text-zinc-500 hover:text-red-400 transition-colors ml-1"
+                >
+                  <LogOut className="h-3 w-3 md:h-4 md:w-4" />
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <Button
+              variant="secondary"
+              className="rounded-xl md:rounded-2xl gap-2 font-bold px-4 md:px-5 bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs md:text-sm h-11 md:h-12"
+              onClick={handleLogin}
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <User className="h-4 w-4 md:h-5 md:w-5" />
+              )}
+              <span className="inline">Login</span>
+            </Button>
+          )
         ) : (
           <Button
             variant="secondary"
-            className="rounded-xl md:rounded-2xl gap-2 font-bold px-3 md:px-5 bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs md:text-sm h-10 md:h-11"
+            className="rounded-xl md:rounded-2xl gap-2 font-bold px-4 md:px-5 bg-white/5 border border-white/10 text-white text-xs md:text-sm h-11 md:h-12"
             onClick={handleLogin}
-            suppressHydrationWarning
           >
-            {mounted && isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <User className="h-4 w-4 md:h-5 md:w-5" />
-            )}
-            <span className="hidden sm:inline">Login</span>
+            <User className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="inline">Login</span>
           </Button>
         )}
 

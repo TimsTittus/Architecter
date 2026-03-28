@@ -26,6 +26,7 @@ export interface Session {
   status: AppStatus;
   history: HistoryEntry[];
   draft_json: string;
+  draft_english: string;
   is_complete: boolean;
   confidence: number;
 }

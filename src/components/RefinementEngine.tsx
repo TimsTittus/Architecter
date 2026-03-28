@@ -18,6 +18,7 @@ export const RefinementEngine = () => {
     incrementIteration,
     setQuestions,
     setDraftJson,
+    setDraftEnglish,
     setConfidence,
     setIsComplete
   } = useArchitectStore();
@@ -62,6 +63,7 @@ export const RefinementEngine = () => {
 
       setQuestions(data.questions || []);
       setDraftJson(data.draft_json || '');
+      setDraftEnglish(data.draft_english || '');
       setConfidence(data.confidence || 0);
       setIsComplete(data.is_complete || false);
 
