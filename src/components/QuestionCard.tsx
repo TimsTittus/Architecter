@@ -1,10 +1,11 @@
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Question } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface QuestionCardProps {
@@ -12,11 +13,12 @@ interface QuestionCardProps {
   onAnswer: (id: string, answer: string | boolean) => void;
 }
 
-export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
+export const QuestionCard = React.memo(({ question, onAnswer }: QuestionCardProps) => {
   const isAnswered = question.answer !== undefined && question.answer !== '';
 
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, scale: 0.95, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
@@ -53,6 +55,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
               className="bg-black/20 border-white/5 text-white h-10 md:h-12 rounded-xl focus:ring-white/20 text-sm md:text-base px-3 md:px-4"
               onChange={(e) => onAnswer(question.id, e.target.value)}
               value={typeof question.answer === 'string' ? question.answer : ''}
+              aria-label={`Answer for ${question.field}`}
             />
           )}
 
@@ -62,7 +65,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
                 <Button
                   key={option}
                   variant={question.answer === option ? "default" : "secondary"}
-                  className="rounded-xl h-auto min-h-9 md:min-h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest px-4 py-2 text-wrap text-center"
+                  className="rounded-xl h-auto min-h-9 md:min-h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest px-4 py-2 text-wrap text-center transition-all"
                   onClick={() => onAnswer(question.id, option)}
                 >
                   {option}
@@ -80,7 +83,7 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
                 <Button
                   key={String(opt.val)}
                   variant={question.answer === opt.val ? "default" : "secondary"}
-                  className="flex-1 rounded-xl h-9 md:h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest"
+                  className="flex-1 rounded-xl h-9 md:h-10 text-[9px] md:text-[10px] uppercase font-black tracking-widest transition-all"
                   onClick={() => onAnswer(question.id, opt.val)}
                 >
                   {opt.label}
@@ -92,4 +95,6 @@ export const QuestionCard = ({ question, onAnswer }: QuestionCardProps) => {
       </div>
     </motion.div>
   );
-};
+});
+
+QuestionCard.displayName = 'QuestionCard';

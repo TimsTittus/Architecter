@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppStatus, Question, Session } from '@/types';
+import { AppStatus, Question, Session, HistoryEntry } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+
 export const MAX_ITERATIONS = 4;
 
-interface ArchitectState extends Session {
-  iteration_count: number;
+interface ArchitectActions {
   setRawContext: (context: string) => void;
   setStatus: (status: AppStatus) => void;
   setQuestions: (questions: Question[]) => void;
@@ -14,34 +14,38 @@ interface ArchitectState extends Session {
   setDraftEnglish: (english: string) => void;
   setConfidence: (confidence: number) => void;
   setIsComplete: (isComplete: boolean) => void;
-  addToHistory: (entry: import('@/types').HistoryEntry) => void;
+  addToHistory: (entry: HistoryEntry) => void;
   reset: () => void;
   incrementIteration: () => void;
 }
 
-const initialState = {
+interface ArchitectState extends Session {
+  iteration_count: number;
+}
+
+type ArchitectStore = ArchitectState & ArchitectActions;
+
+const createInitialState = (): ArchitectState => ({
   session_id: uuidv4(),
   raw_context: '',
   refined_data: {},
   questions: [],
-  status: 'idle' as AppStatus,
+  status: 'idle',
   history: [],
   draft_json: '',
   draft_english: '',
   is_complete: false,
   confidence: 0,
   iteration_count: 0,
-};
+});
 
-export const useArchitectStore = create<ArchitectState>()(
+export const useArchitectStore = create<ArchitectStore>()(
   persist(
     (set) => ({
-      ...initialState,
+      ...createInitialState(),
 
       setRawContext: (raw_context) => set({ raw_context }),
-
       setStatus: (status) => set({ status }),
-
       setQuestions: (questions) => set({ questions }),
 
       answerQuestion: (id, answer) =>
@@ -53,9 +57,7 @@ export const useArchitectStore = create<ArchitectState>()(
 
       setDraftJson: (draft_json) => set({ draft_json }),
       setDraftEnglish: (draft_english) => set({ draft_english }),
-
       setConfidence: (confidence) => set({ confidence }),
-
       setIsComplete: (is_complete) => set({ is_complete }),
 
       addToHistory: (entry) =>
@@ -68,7 +70,7 @@ export const useArchitectStore = create<ArchitectState>()(
           iteration_count: state.iteration_count + 1
         })),
 
-      reset: () => set({ ...initialState, session_id: uuidv4() }),
+      reset: () => set(createInitialState()),
     }),
     {
       name: 'prompt-architect-storage',

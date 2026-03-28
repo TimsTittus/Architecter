@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useArchitectStore } from '@/store/useArchitectStore';
 import { Header } from '@/components/Header';
 import { Stepper } from '@/components/Stepper';
@@ -9,66 +9,23 @@ import { ContextInput } from '@/components/ContextInput';
 import { RefinementEngine } from '@/components/RefinementEngine';
 import { JsonPreview } from '@/components/JsonPreview';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Toaster, toast } from 'sonner';
+import { Toaster } from 'sonner';
 import { Rocket } from 'lucide-react';
+import { useInitialAnalysis } from '@/hooks/useInitialAnalysis';
 
 export default function Home() {
-  const {
-    status,
-    raw_context,
-    setStatus,
-    setQuestions,
-    setDraftJson,
-    setConfidence,
-    setIsComplete,
-    iteration_count,
-    confidence,
-    setDraftEnglish
-  } = useArchitectStore();
+  const { status, confidence } = useArchitectStore();
   const [mounted, setMounted] = useState(false);
+
+  // Initialize analysis flow
+  useInitialAnalysis();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const initialAnalysis = async () => {
-      if (status === 'analyzing' && iteration_count === 0) {
-        try {
-          const response = await fetch('/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_input: raw_context,
-              iteration_count: 0
-            })
-          });
-
-          if (!response.ok) throw new Error('Failed to analyze context');
-
-          const data = await response.json();
-
-          setQuestions(data.questions || []);
-          setDraftJson(data.draft_json || '');
-          setDraftEnglish(data.draft_english || '');
-          setConfidence(data.confidence || 0);
-          setIsComplete(data.is_complete || false);
-
-          if (data.is_complete) {
-            setStatus('complete');
-          } else {
-            setStatus('questioning');
-          }
-        } catch (error) {
-          console.error(error);
-          setStatus('idle');
-          toast.error('AI Analysis failed. Please check your API key and try again.');
-        }
-      }
-    };
-
-    initialAnalysis();
-  }, [status, raw_context, iteration_count, setStatus, setQuestions, setDraftJson, setConfidence, setIsComplete]);
+  const isIdle = !mounted || status === 'idle';
+  const isAnalyzing = status === 'analyzing';
 
   return (
     <div className="flex min-h-screen bg-black text-white font-sans selection:bg-white/30 overflow-x-hidden">
@@ -78,7 +35,7 @@ export default function Home() {
 
         <main className="flex-1 px-4 md:px-8 py-6 max-w-[1600px] mx-auto w-full">
           <AnimatePresence mode="wait">
-            {!mounted || status === 'idle' ? (
+            {isIdle ? (
               <motion.div
                 key="landing"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -111,7 +68,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start pb-20">
                   {/* Left Column: Logic Flow (7/12) */}
                   <div className="lg:col-span-7 space-y-6">
-                    {status === 'analyzing' ? (
+                    {isAnalyzing ? (
                       <div className="flex flex-col items-center justify-center p-10 md:p-20 space-y-6 rounded-[24px] md:rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-2xl">
                         <div className="relative">
                           <Rocket className="h-12 w-12 md:h-16 md:w-16 text-white animate-pulse" />

@@ -1,11 +1,12 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useArchitectStore } from '@/store/useArchitectStore';
+import { useArchitectStore, MAX_ITERATIONS } from '@/store/useArchitectStore';
 import { QuestionCard } from './QuestionCard';
 import { Button } from '@/components/ui/button';
 import { Send, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCallback, useMemo } from 'react';
 
 export const RefinementEngine = () => {
   const {
@@ -23,11 +24,11 @@ export const RefinementEngine = () => {
     setIsComplete
   } = useArchitectStore();
 
-  const handleAnswer = (id: string, answer: string | boolean) => {
+  const handleAnswer = useCallback((id: string, answer: string | boolean) => {
     answerQuestion(id, answer);
-  };
+  }, [answerQuestion]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const unanswered = questions.filter(q => q.answer === undefined || q.answer === '');
     if (unanswered.length > 0) {
       toast.error('Contextual Gap Detected', {
@@ -40,12 +41,10 @@ export const RefinementEngine = () => {
     incrementIteration();
 
     try {
-      const answers: Record<string, string | boolean> = {};
-      questions.forEach(q => {
-        if (q.answer !== undefined) {
-          answers[q.field] = q.answer;
-        }
-      });
+      const answers = questions.reduce((acc, q) => {
+        if (q.answer !== undefined) acc[q.field] = q.answer;
+        return acc;
+      }, {} as Record<string, string | boolean>);
 
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -57,7 +56,7 @@ export const RefinementEngine = () => {
         })
       });
 
-      if (!response.ok) throw new Error('API Fault');
+      if (!response.ok) throw new Error('API Fault: Unable to reach architect services.');
 
       const data = await response.json();
 
@@ -73,45 +72,41 @@ export const RefinementEngine = () => {
           description: 'Blueprint is now production-ready.'
         });
 
-        // Save to history if logged in
-        try {
-          await fetch('/api/history', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              rawInput: raw_context,
-              finalPrompt: data.draft_json,
-              draftJson: data.draft_json,
-              confidence: data.confidence,
-              iterationCount: iteration_count + 1
-            })
-          });
-        } catch (hError: unknown) {
-          console.error('Failed to save history:', hError instanceof Error ? hError.message : String(hError));
-        }
+        // Background save to history
+        fetch('/api/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rawInput: raw_context,
+            finalPrompt: data.draft_json,
+            draftJson: data.draft_json,
+            confidence: data.confidence,
+            iterationCount: iteration_count + 1
+          })
+        }).catch(err => console.error('History save failed:', err));
+
       } else {
         setStatus('questioning');
-        toast.info(`Iteration ${iteration_count + 1}`, {
+        toast.info(`Iteration ${iteration_count + 1} Complete`, {
           description: `Architect is seeking deeper clarity on specific modules.`
         });
       }
     } catch (error: unknown) {
-      console.error(error);
+      console.error('Submission Error:', error);
       setStatus('questioning');
       toast.error('Logical Fault', {
         description: error instanceof Error ? error.message : 'Unable to process updates. Please retry.'
       });
     }
-  };
+  }, [questions, raw_context, iteration_count, setStatus, incrementIteration, setQuestions, setDraftJson, setDraftEnglish, setConfidence, setIsComplete]);
 
-  const MAX_ITERATIONS = 4;
   const currentRound = iteration_count + 1;
   const totalRounds = MAX_ITERATIONS + 1;
-  const roundsLeft = Math.max(0, totalRounds - currentRound);
+  const roundsLeft = useMemo(() => Math.max(0, totalRounds - currentRound), [totalRounds, currentRound]);
 
   return (
     <div className="flex flex-col gap-6 md:gap-8 h-full">
-      <div className="flex flex-col gap-3">
+      <header className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xl md:text-2xl font-black text-white tracking-tight uppercase">
             Logic Refinement
@@ -134,10 +129,10 @@ export const RefinementEngine = () => {
             Round {currentRound} of {totalRounds}
           </span>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 md:pr-4 custom-scrollbar min-h-0">
-        <AnimatePresence mode="popLayout">
+      <section className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 md:pr-4 custom-scrollbar min-h-0">
+        <AnimatePresence mode="popLayout" initial={false}>
           {questions.map((question) => (
             <QuestionCard
               key={question.id}
@@ -146,11 +141,11 @@ export const RefinementEngine = () => {
             />
           ))}
         </AnimatePresence>
-      </div>
+      </section>
 
-      <div className="pt-4 border-t border-white/5">
+      <footer className="pt-4 border-t border-white/5">
         <Button
-          className="w-full gap-3 font-black text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-2xl h-12 md:h-14 bg-white text-black hover:bg-white/90"
+          className="w-full gap-3 font-black text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-2xl h-12 md:h-14 bg-white text-black hover:bg-white/90 disabled:opacity-50 transition-all"
           onClick={handleSubmit}
           disabled={status === 'analyzing'}
         >
@@ -161,7 +156,7 @@ export const RefinementEngine = () => {
           )}
           Push Architectural Updates
         </Button>
-      </div>
+      </footer>
     </div>
   );
 };
