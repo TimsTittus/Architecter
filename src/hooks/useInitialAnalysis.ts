@@ -12,7 +12,9 @@ export const useInitialAnalysis = () => {
     setConfidence,
     setIsComplete,
     iteration_count,
-    setDraftEnglish
+    setDraftEnglish,
+    image_context,
+    setVisualTokens
   } = useArchitectStore();
 
   useEffect(() => {
@@ -20,12 +22,16 @@ export const useInitialAnalysis = () => {
       if (status !== 'analyzing' || iteration_count !== 0) return;
 
       try {
-        const response = await fetch('/api/generate', {
+        const response = await fetch('/api/analyze-multimodal', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             user_input: raw_context,
-            iteration_count: 0
+            iteration_count: 0,
+            image_context: image_context ? {
+              base64: image_context.base64,
+              mimeType: image_context.mimeType
+            } : null
           })
         });
 

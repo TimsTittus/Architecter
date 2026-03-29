@@ -5,7 +5,7 @@ import { useArchitectStore } from '@/store/useArchitectStore';
 import { Header } from '@/components/Header';
 import { Stepper } from '@/components/Stepper';
 import { ConfidenceMeter } from '@/components/ConfidenceMeter';
-import { ContextInput } from '@/components/ContextInput';
+import { SmartContextUploader } from '@/components/SmartContextUploader';
 import { RefinementEngine } from '@/components/RefinementEngine';
 import { JsonPreview } from '@/components/JsonPreview';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +14,7 @@ import { Rocket } from 'lucide-react';
 import { useInitialAnalysis } from '@/hooks/useInitialAnalysis';
 
 export default function Home() {
-  const { status, confidence } = useArchitectStore();
+  const { status, confidence, image_context } = useArchitectStore();
   const [mounted, setMounted] = useState(false);
 
   // Initialize analysis flow
@@ -43,8 +43,8 @@ export default function Home() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="h-full flex items-center justify-center py-10 md:py-20"
               >
-                <div className="w-full max-w-2xl">
-                  <ContextInput />
+                <div className="w-full max-w-4xl mx-auto">
+                  <SmartContextUploader />
                 </div>
               </motion.div>
             ) : (
@@ -78,11 +78,39 @@ export default function Home() {
                             transition={{ repeat: Infinity, duration: 2 }}
                           />
                         </div>
-                        <div className="text-center">
+                        <div className="text-center space-y-4">
                           <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-                            Architecting Logic...
+                            {image_context ? 'Multimodal Architecting...' : 'Architecting Logic...'}
                           </h3>
-                          <p className="text-zinc-500 text-xs md:text-sm max-w-xs mx-auto italic">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-center gap-3">
+                              <div className="h-1 w-12 rounded-full bg-white/20 overflow-hidden">
+                                <motion.div
+                                  className="h-full bg-white"
+                                  animate={{ x: [-48, 48] }}
+                                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                                />
+                              </div>
+                              <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-bold">
+                                Parsing Text Logic
+                              </span>
+                            </div>
+                            {image_context && (
+                              <div className="flex items-center justify-center gap-3">
+                                <div className="h-1 w-12 rounded-full bg-white/20 overflow-hidden">
+                                  <motion.div
+                                    className="h-full bg-blue-500"
+                                    animate={{ x: [-48, 48] }}
+                                    transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut", delay: 0.5 }}
+                                  />
+                                </div>
+                                <span className="text-blue-500/80 text-[10px] uppercase tracking-widest font-bold">
+                                  Scanning Visual Context
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-zinc-500 text-xs md:text-sm max-w-xs mx-auto italic pt-2">
                             Architect is analyzing your requirements and identifying optimal data structures.
                           </p>
                         </div>

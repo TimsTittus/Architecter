@@ -29,12 +29,22 @@ export interface Session {
   draft_english: string;
   is_complete: boolean;
   confidence: number;
+  image_context: {
+    base64: string | null;
+    mimeType: string | null;
+    fileName: string | null;
+  } | null;
+  visual_tokens: VisualToken[];
 }
 
 export interface GenerateRequest {
   user_input: string;
   previous_responses?: Record<string, string | boolean>;
   iteration_count: number;
+  image_context?: {
+    base64: string;
+    mimeType: string;
+  } | null;
 }
 
 export interface GenerateResponse {
@@ -43,4 +53,12 @@ export interface GenerateResponse {
   questions: Question[];
   draft_json: string;
   confidence: number;
+  visual_tokens?: VisualToken[];
+}
+
+export interface VisualToken {
+  id: string;
+  label: string;
+  count: number;
+  category: 'ui' | 'logic' | 'flow' | 'other';
 }

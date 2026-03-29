@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppStatus, Question, Session, HistoryEntry } from '@/types';
+import { AppStatus, Question, Session, HistoryEntry, VisualToken } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const MAX_ITERATIONS = 4;
@@ -15,6 +15,8 @@ interface ArchitectActions {
   setConfidence: (confidence: number) => void;
   setIsComplete: (isComplete: boolean) => void;
   addToHistory: (entry: HistoryEntry) => void;
+  setImageContext: (context: { base64: string | null; mimeType: string | null; fileName: string | null; } | null) => void;
+  setVisualTokens: (tokens: VisualToken[]) => void;
   reset: () => void;
   incrementIteration: () => void;
 }
@@ -37,6 +39,8 @@ const createInitialState = (): ArchitectState => ({
   is_complete: false,
   confidence: 0,
   iteration_count: 0,
+  image_context: null,
+  visual_tokens: [],
 });
 
 export const useArchitectStore = create<ArchitectStore>()(
@@ -69,6 +73,9 @@ export const useArchitectStore = create<ArchitectStore>()(
         set((state) => ({
           iteration_count: state.iteration_count + 1
         })),
+
+      setImageContext: (image_context) => set({ image_context }),
+      setVisualTokens: (visual_tokens) => set({ visual_tokens }),
 
       reset: () => set(createInitialState()),
     }),

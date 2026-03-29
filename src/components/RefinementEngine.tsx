@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Send, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 export const RefinementEngine = () => {
   const {
@@ -21,7 +22,9 @@ export const RefinementEngine = () => {
     setDraftJson,
     setDraftEnglish,
     setConfidence,
-    setIsComplete
+    setIsComplete,
+    visual_tokens,
+    setVisualTokens
   } = useArchitectStore();
 
   const handleAnswer = useCallback((id: string, answer: string | boolean) => {
@@ -65,6 +68,7 @@ export const RefinementEngine = () => {
       setDraftEnglish(data.draft_english || '');
       setConfidence(data.confidence || 0);
       setIsComplete(data.is_complete || false);
+      setVisualTokens(data.visual_tokens || []);
 
       if (data.is_complete) {
         setStatus('complete');
@@ -129,6 +133,29 @@ export const RefinementEngine = () => {
             Round {currentRound} of {totalRounds}
           </span>
         </div>
+
+        {/* Visual Tokens Display */}
+        {visual_tokens && visual_tokens.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {visual_tokens.map((token) => (
+              <div
+                key={token.id}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group cursor-default"
+              >
+                <div className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  token.category === 'ui' ? "bg-blue-400" :
+                    token.category === 'logic' ? "bg-purple-400" :
+                      token.category === 'flow' ? "bg-green-400" : "bg-zinc-400"
+                )} />
+                <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-white transition-colors">
+                  {token.label}
+                  {token.count > 1 && <span className="ml-1 opacity-50">x{token.count}</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </header>
 
       <section className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 md:pr-4 custom-scrollbar min-h-0">
