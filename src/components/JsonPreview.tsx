@@ -161,7 +161,7 @@ export const JsonPreview = () => {
 
         {is_complete && (
           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
-            v1.0.0
+            v1.1.0
           </span>
         )}
       </footer>
