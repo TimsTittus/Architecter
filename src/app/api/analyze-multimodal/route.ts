@@ -43,9 +43,27 @@ OUTPUT FORMAT (Strict JSON):
 }
 `;
 
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { checkRateLimit, validateRequest, sanitizePrompt } from '@/lib/security';
+import { getCache, setCache, generateCacheKey } from '@/lib/cache';
+import { db } from '@/lib/db';
+import { usage, user as userTable } from '@/lib/schema';
+import { eq, and } from 'drizzle-orm';
+import { z } from 'zod';
+
+const RequestSchema = z.object({
+  user_input: z.string().min(1).max(4000),
+  image_context: z.object({
+    base64: z.string(),
+    mimeType: z.string()
+  }).optional(),
+  iteration_count: z.number().int().min(0).max(10),
+});
+
 function parseGeminiResponse(text: string) {
   try {
-    const cleanText = text.replace(/```json\n?|```/g, '').trim();
+    const cleanText = typeof text === 'string' ? text.replace(/```json\n?|```/g, '').trim() : '';
     return JSON.parse(cleanText);
   } catch (error) {
     console.error('[API] Failed to parse Gemini JSON:', error);
@@ -63,11 +81,69 @@ function parseGeminiResponse(text: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { user_input, image_context, iteration_count } = await req.json();
+    const session = await auth.api.getSession({ headers: await headers() });
+
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+
+    // 1. Identification
+    const userId = session?.user.id;
+    const identifier = userId || ip;
+    const isGuest = !userId;
+
+    // 2. Rate Limiting
+    const rateLimit = await checkRateLimit(identifier);
+    if (!rateLimit.success) {
+      console.warn(`[API] Rate limit exceeded for ${identifier} (${isGuest ? 'Guest' : 'User'})`);
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
+    // 3. Validation & Sanitization
+    const body = await req.json();
+    const validated = validateRequest(RequestSchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
+    }
+
+    const { user_input, image_context, iteration_count } = validated.data;
+    const sanitizedInput = sanitizePrompt(user_input);
+
+    // 4. Quota check
+    const today = new Date().toISOString().split('T')[0];
+    let quotaLimit = 100;
+    if (userId) {
+      const [userRecord] = await db.select().from(userTable).where(eq(userTable.id, userId)).limit(1);
+      quotaLimit = userRecord?.quotaLimit ?? 100;
+    } else {
+      quotaLimit = 10; // Guest quota
+    }
+
+    let [usageRecord] = await db.select().from(usage).where(
+      and(
+        userId ? eq(usage.userId, userId) : eq(usage.ipAddress, ip),
+        eq(usage.date, today),
+        eq(usage.endpoint, '/api/analyze-multimodal')
+      )
+    ).limit(1);
+
+    if (usageRecord && usageRecord.count >= quotaLimit) {
+      console.warn(`[API] Quota exceeded for ${identifier} (${isGuest ? 'Guest' : 'User'})`);
+      return NextResponse.json({
+        error: isGuest
+          ? 'Daily guest quota exceeded (10/day). Please log in for up to 100 requests.'
+          : 'Daily quota exceeded (100/day). Contact admin for higher limits.'
+      }, { status: 403 });
+    }
+
+    // 5. Caching (only for text context, image context might be too large for easy cache keys, or we hash it)
+    const cacheKey = generateCacheKey({ sanitizedInput, image_context: !!image_context, iteration_count });
+    const cachedResponse = getCache(cacheKey);
+    if (cachedResponse && !image_context) { // Only cache text-only requests for now as image context is dynamic
+      return NextResponse.json(cachedResponse);
+    }
 
     const parts: any[] = [
       { text: SYSTEM_PROMPT },
-      { text: `User Text Context: ${user_input}\nIteration Count: ${iteration_count}` }
+      { text: `User Text Context: ${sanitizedInput}\nIteration Count: ${iteration_count}` }
     ];
 
     if (image_context && image_context.base64) {
@@ -80,6 +156,7 @@ export async function POST(req: NextRequest) {
       parts.push({ text: "Please analyze the attached image as visual context for the requirements." });
     }
 
+    // @ts-ignore
     const result = await client.models.generateContent({
       model: PRIMARY_MODEL,
       contents: [
@@ -92,6 +169,26 @@ export async function POST(req: NextRequest) {
 
     const responseText = result.text || '';
     const parsedData = parseGeminiResponse(responseText);
+
+    // Update Quota usage
+    if (usageRecord) {
+      await db.update(usage).set({ count: usageRecord.count + 1, lastRequestAt: new Date() }).where(eq(usage.id, usageRecord.id));
+    } else {
+      await db.insert(usage).values({
+        id: crypto.randomUUID(),
+        userId: userId || null,
+        ipAddress: ip,
+        endpoint: '/api/analyze-multimodal',
+        date: today,
+        count: 1,
+        lastRequestAt: new Date(),
+      });
+    }
+
+    // Cache the result (only for text-only)
+    if (!image_context) {
+      setCache(cacheKey, parsedData);
+    }
 
     return NextResponse.json(parsedData);
   } catch (error: any) {

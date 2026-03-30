@@ -8,6 +8,17 @@ export const user = sqliteTable('user', {
   image: text('image'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+  quotaLimit: integer('quota_limit').default(100),
+});
+
+export const usage = sqliteTable('usage', {
+  id: text('id').primaryKey(),
+  userId: text('userId').references(() => user.id),
+  ipAddress: text('ipAddress'),
+  endpoint: text('endpoint').notNull(),
+  date: text('date').notNull(), // YYYY-MM-DD
+  count: integer('count').default(0).notNull(),
+  lastRequestAt: integer('lastRequestAt', { mode: 'timestamp' }).notNull(),
 });
 
 export const session = sqliteTable('session', {

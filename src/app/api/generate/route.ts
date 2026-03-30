@@ -37,15 +37,30 @@ OUTPUT FORMAT (Strict JSON):
 Focus on precision, architectural best practices, and minimal but high-impact interaction.
 `;
 
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { checkRateLimit, validateRequest, sanitizePrompt } from '@/lib/security';
+import { getCache, setCache, generateCacheKey } from '@/lib/cache';
+import { db } from '@/lib/db';
+import { usage, user as userTable } from '@/lib/schema';
+import { eq, and } from 'drizzle-orm';
+import { z } from 'zod';
+
+const RequestSchema = z.object({
+  user_input: z.string().min(1).max(4000),
+  previous_responses: z.record(z.string(), z.any()).optional(),
+  iteration_count: z.number().int().min(0).max(10),
+});
+
 // Helper to safely parse JSON from Gemini's response
 function parseGeminiResponse(text: string) {
   try {
-    const cleanText = text.replace(/```json\n?|```/g, '').trim();
+    const cleanText = typeof text === 'string' ? text.replace(/```json\n?|```/g, '').trim() : '';
     return JSON.parse(cleanText);
   } catch (error) {
     console.error('[API] Failed to parse Gemini JSON:', error);
     console.log('[API] Raw output was:', text);
-    
+
     return {
       is_complete: false,
       missing_logic: "AI output parsing error.",
@@ -79,9 +94,68 @@ async function attemptGeneration(model: string, prompt: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { user_input, previous_responses, iteration_count } = await req.json();
+    const session = await auth.api.getSession({ headers: await headers() });
 
-    let prompt = `User Input: ${user_input}\n`;
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+
+    // 1. Identification
+    const userId = session?.user.id;
+    const identifier = userId || ip;
+    const isGuest = !userId;
+
+    // 2. Rate Limiting
+    const rateLimit = await checkRateLimit(identifier);
+    if (!rateLimit.success) {
+      console.warn(`[API] Rate limit exceeded for ${identifier} (${isGuest ? 'Guest' : 'User'})`);
+      return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    }
+
+    // 3. Validation & Sanitization
+    const body = await req.json();
+    const validated = validateRequest(RequestSchema, body);
+    if (!validated.success) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
+    }
+
+    const { user_input, previous_responses, iteration_count } = validated.data;
+    const sanitizedInput = sanitizePrompt(user_input);
+
+    // 4. Quota check
+    const today = new Date().toISOString().split('T')[0];
+    let quotaLimit = 100;
+    if (userId) {
+      const [userRecord] = await db.select().from(userTable).where(eq(userTable.id, userId)).limit(1);
+      quotaLimit = userRecord?.quotaLimit ?? 100;
+    } else {
+      quotaLimit = 10; // Guest quota
+    }
+
+    let [usageRecord] = await db.select().from(usage).where(
+      and(
+        userId ? eq(usage.userId, userId) : eq(usage.ipAddress, ip),
+        eq(usage.date, today),
+        eq(usage.endpoint, '/api/generate')
+      )
+    ).limit(1);
+
+    if (usageRecord && usageRecord.count >= quotaLimit) {
+      console.warn(`[API] Quota exceeded for ${identifier} (${isGuest ? 'Guest' : 'User'})`);
+      return NextResponse.json({
+        error: isGuest
+          ? 'Daily guest quota exceeded (10/day). Please log in for up to 100 requests.'
+          : 'Daily quota exceeded (100/day). Contact admin for higher limits.'
+      }, { status: 403 });
+    }
+
+    // 5. Caching
+    const cacheKey = generateCacheKey({ sanitizedInput, previous_responses, iteration_count });
+    const cachedResponse = getCache(cacheKey);
+    if (cachedResponse) {
+      console.log(`[API] Cache hit for user ${userId}`);
+      return NextResponse.json(cachedResponse);
+    }
+
+    let prompt = `User Input: ${sanitizedInput}\n`;
     if (previous_responses && Object.keys(previous_responses).length > 0) {
       prompt += `Previous Clarifications: ${JSON.stringify(previous_responses)}\n`;
     }
@@ -94,17 +168,17 @@ export async function POST(req: NextRequest) {
       result = await attemptGeneration(PRIMARY_MODEL, prompt);
     } catch (primaryError: unknown) {
       console.warn(`[API] Primary model (${PRIMARY_MODEL}) failed:`, primaryError instanceof Error ? primaryError.message : String(primaryError));
-      
+
       // Fallback Attempt
       try {
         result = await attemptGeneration(FALLBACK_MODEL, prompt);
         console.log(`[API] Successfully fell back to ${FALLBACK_MODEL}`);
       } catch (fallbackError: unknown) {
         console.error('[API] Both primary and fallback models failed.');
-        
+
         const errorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
         const isQuota = errorMessage.includes('429');
-        
+
         return NextResponse.json({
           is_complete: false,
           missing_logic: "API Connection Error.",
@@ -112,7 +186,7 @@ export async function POST(req: NextRequest) {
             {
               id: 'api-error',
               field: 'error',
-              question: isQuota 
+              question: isQuota
                 ? "API quota exhausted. Please wait a minute before retrying."
                 : "The architect service is currently unavailable. Please verify your GEMINI_API_KEY.",
               type: 'text'
@@ -127,6 +201,24 @@ export async function POST(req: NextRequest) {
 
     const responseText = result.text || '';
     const parsedData = parseGeminiResponse(responseText);
+
+    // Update Quota usage
+    if (usageRecord) {
+      await db.update(usage).set({ count: usageRecord.count + 1, lastRequestAt: new Date() }).where(eq(usage.id, usageRecord.id));
+    } else {
+      await db.insert(usage).values({
+        id: crypto.randomUUID(),
+        userId: userId || null,
+        ipAddress: ip,
+        endpoint: '/api/generate',
+        date: today,
+        count: 1,
+        lastRequestAt: new Date(),
+      });
+    }
+
+    // Cache the result
+    setCache(cacheKey, parsedData);
 
     return NextResponse.json(parsedData);
   } catch (error: unknown) {
