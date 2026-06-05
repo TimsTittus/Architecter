@@ -4,14 +4,14 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useArchitectStore } from '@/store/useArchitectStore';
 import { Button } from '@/components/ui/button';
-import { Copy, Download, FileJson, Check, ShieldCheck } from 'lucide-react';
+import { Copy, Download, FileJson, Check, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const JsonPreview = () => {
-  const { draft_json, draft_english, is_complete } = useArchitectStore();
+  const { draft_json, draft_english, is_complete, status, iteration_count } = useArchitectStore();
   const [copied, setCopied] = useState(false);
   const [view, setView] = useState<'json' | 'english'>('json');
 
@@ -48,6 +48,8 @@ export const JsonPreview = () => {
     toast.success('Download Initiated');
   }, [formattedJson]);
 
+  const hasContent = draft_json && draft_json !== '{}';
+
   return (
     <div className="flex flex-col h-full rounded-[24px] md:rounded-[32px] bg-white/5 border border-white/10 shadow-2xl overflow-hidden backdrop-blur-3xl group">
       {/* Header */}
@@ -62,6 +64,9 @@ export const JsonPreview = () => {
             </span>
             <span className="text-[8px] md:text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
               {view === 'json' ? 'JSON Output' : 'English Overview'}
+              {hasContent && iteration_count > 0 && (
+                <span className="ml-2 text-zinc-500">• Round {iteration_count}</span>
+              )}
             </span>
           </div>
         </div>
@@ -108,7 +113,7 @@ export const JsonPreview = () => {
       <main className="flex-1 overflow-auto p-4 md:p-6 custom-scrollbar bg-black/40">
         <AnimatePresence mode="wait">
           <motion.div
-            key={view === 'json' ? formattedJson : draft_english}
+            key={view}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -148,6 +153,8 @@ export const JsonPreview = () => {
         <div className="flex items-center gap-2">
           {is_complete ? (
             <ShieldCheck className="h-4 w-4 text-white" />
+          ) : status === 'analyzing' ? (
+            <RefreshCw className="h-4 w-4 text-zinc-400 animate-spin" />
           ) : (
             <div className="h-4 w-4 rounded-full border-2 border-zinc-700 border-t-white animate-spin" />
           )}
@@ -155,15 +162,28 @@ export const JsonPreview = () => {
             "text-[10px] font-black uppercase tracking-widest",
             is_complete ? "text-white" : "text-zinc-600"
           )}>
-            {is_complete ? "Architecture Certified" : "Syncing Logic Modules..."}
+            {is_complete
+              ? "Architecture Certified"
+              : status === 'analyzing'
+                ? "Updating Blueprint..."
+                : hasContent
+                  ? "Blueprint Evolving"
+                  : "Syncing Logic Modules..."}
           </span>
         </div>
 
-        {is_complete && (
-          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
-            v1.1.0
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {hasContent && !is_complete && (
+            <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-600">
+              Iteration {iteration_count}
+            </span>
+          )}
+          {is_complete && (
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">
+              v1.1.0
+            </span>
+          )}
+        </div>
       </footer>
     </div>
   );

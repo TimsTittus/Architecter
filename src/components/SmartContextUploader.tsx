@@ -61,12 +61,23 @@ export const SmartContextUploader = () => {
                 <Layout className="h-4 w-4 text-zinc-500" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Logical Requirements</span>
               </div>
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Describe your system, data flows, and constraints..."
-                className="min-h-[200px] md:min-h-[300px] bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-white/20 resize-none text-lg font-medium leading-relaxed custom-scrollbar px-6 py-4 transition-all"
-              />
+              <div className="relative flex-1 flex flex-col">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  maxLength={16000}
+                  placeholder="Describe your system, data flows, and constraints..."
+                  className="min-h-[200px] md:min-h-[300px] h-full bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-white/20 resize-none text-lg font-medium leading-relaxed custom-scrollbar px-6 py-4 pb-12 transition-all"
+                />
+                <div className="absolute bottom-4 right-4 text-[10px] font-bold tracking-wider uppercase bg-black/40 px-2.5 py-1 rounded-md border border-white/5 backdrop-blur-sm pointer-events-none transition-colors">
+                  <span className={cn(
+                    input.length >= 15000 ? "text-amber-400 font-extrabold" : "text-zinc-500"
+                  )}>
+                    {input.length.toLocaleString()}
+                  </span>
+                  <span className="text-zinc-700"> / 16,000</span>
+                </div>
+              </div>
             </div>
 
             {/* Right Column: Visual Context */}

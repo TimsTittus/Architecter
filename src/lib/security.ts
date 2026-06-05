@@ -34,7 +34,7 @@ export function validateRequest<T>(schema: ZodSchema<T>, data: any): { success: 
 
 // Sanitization: Block suspicious patterns and limit length
 export function sanitizePrompt(prompt: string): string {
-  const maxLength = 4000;
+  const maxLength = 16000;
   let sanitized = prompt.trim().slice(0, maxLength);
 
   // Basic blockage of common injection patterns

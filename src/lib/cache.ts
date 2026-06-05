@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 type CacheEntry<T> = {
   data: T;
   expiresAt: number;
@@ -25,5 +27,5 @@ export function setCache<T>(key: string, data: T, ttlMs: number = 3600000): void
 }
 
 export function generateCacheKey(input: any): string {
-  return Buffer.from(JSON.stringify(input)).toString('base64').slice(0, 100);
+  return crypto.createHash('sha256').update(JSON.stringify(input)).digest('hex');
 }

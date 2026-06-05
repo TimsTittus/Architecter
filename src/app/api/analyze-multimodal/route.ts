@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { client, PRIMARY_MODEL } from '@/lib/gemini';
+import { PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/gemini';
+import { generateWithFallback } from '@/lib/retry';
 
 export const runtime = 'nodejs';
 
@@ -53,11 +54,14 @@ import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 
 const RequestSchema = z.object({
-  user_input: z.string().min(1).max(4000),
-  image_context: z.object({
-    base64: z.string(),
-    mimeType: z.string()
-  }).optional(),
+  user_input: z.string().trim().max(16000),
+  image_context: z.union([
+    z.object({
+      base64: z.string(),
+      mimeType: z.string()
+    }),
+    z.null()
+  ]).optional(),
   iteration_count: z.number().int().min(0).max(10),
 });
 
@@ -156,18 +160,18 @@ export async function POST(req: NextRequest) {
       parts.push({ text: "Please analyze the attached image as visual context for the requirements." });
     }
 
-    // @ts-ignore
-    const result = await client.models.generateContent({
-      model: PRIMARY_MODEL,
-      contents: [
-        { role: 'user', parts }
-      ],
-      config: {
-        responseMimeType: "application/json",
-      }
-    });
+    const genResult = await generateWithFallback(PRIMARY_MODEL, FALLBACK_MODEL, parts);
 
-    const responseText = result.text || '';
+    // If models need a long wait, return retryable error to client
+    if (!genResult.ok) {
+      console.warn(`[API] Returning retryable error with retryAfterSec=${genResult.retryAfterSec}`);
+      return NextResponse.json({
+        error: genResult.errorMessage,
+        retryAfterSec: genResult.retryAfterSec,
+      }, { status: 503 });
+    }
+
+    const responseText = genResult.result.text || '';
     const parsedData = parseGeminiResponse(responseText);
 
     // Update Quota usage
@@ -193,9 +197,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(parsedData);
   } catch (error: any) {
     console.error('[API] Multimodal Error:', error);
+
+    // Extract retryAfterSec from unhandled retryable errors as a last resort
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const is429or503 = errorMessage.includes('429') || errorMessage.includes('503') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('UNAVAILABLE');
+
+    if (is429or503) {
+      const retryMatch = errorMessage.match(/retry in ([\d.]+)s/i);
+      const retryAfterSec = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 60;
+      return NextResponse.json({
+        error: `AI service temporarily unavailable. Auto-retrying in ${retryAfterSec}s...`,
+        retryAfterSec,
+      }, { status: 503 });
+    }
+
     return NextResponse.json({
       error: 'Multimodal analysis failed',
-      details: error.message
+      details: errorMessage,
     }, { status: 500 });
   }
 }

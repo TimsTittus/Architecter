@@ -6,7 +6,7 @@ import { QuestionCard } from './QuestionCard';
 import { Button } from '@/components/ui/button';
 import { Send, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 export const RefinementEngine = () => {
@@ -24,42 +24,89 @@ export const RefinementEngine = () => {
     setConfidence,
     setIsComplete,
     visual_tokens,
-    setVisualTokens
+    setVisualTokens,
+    accumulated_answers,
+    accumulateAnswers
   } = useArchitectStore();
 
   const handleAnswer = useCallback((id: string, answer: string | boolean) => {
     answerQuestion(id, answer);
   }, [answerQuestion]);
 
-  const handleSubmit = useCallback(async () => {
-    const unanswered = questions.filter(q => q.answer === undefined || q.answer === '');
-    if (unanswered.length > 0) {
-      toast.error('Contextual Gap Detected', {
-        description: `Please clarify: ${unanswered.map(q => q.field).join(', ')}`
-      });
-      return;
-    }
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const MAX_AUTO_RETRIES = 3;
 
-    setStatus('analyzing');
-    incrementIteration();
+  // Cleanup retry timer on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
+  }, []);
 
+  const doSubmit = useCallback(async () => {
     try {
-      const answers = questions.reduce((acc, q) => {
+      // Merge current round's answers into accumulated context
+      accumulateAnswers();
+
+      // Get the latest accumulated answers (current round + all prior)
+      const currentAnswers = questions.reduce((acc, q) => {
         if (q.answer !== undefined) acc[q.field] = q.answer;
         return acc;
       }, {} as Record<string, string | boolean>);
+      const allAnswers = { ...accumulated_answers, ...currentAnswers };
 
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_input: raw_context,
-          previous_responses: answers,
+          previous_responses: allAnswers,
           iteration_count: iteration_count + 1
         })
       });
 
-      if (!response.ok) throw new Error('API Fault: Unable to reach architect services.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+
+        // Auto-retry on retryable errors
+        if (errorData?.retryAfterSec && retryCountRef.current < MAX_AUTO_RETRIES) {
+          const waitSec = Math.min(errorData.retryAfterSec, 120);
+          retryCountRef.current += 1;
+          const attempt = retryCountRef.current;
+
+          const toastId = toast.loading(
+            `AI models are busy. Auto-retrying in ${waitSec}s... (attempt ${attempt}/${MAX_AUTO_RETRIES})`,
+            { duration: (waitSec + 2) * 1000 }
+          );
+
+          let remaining = waitSec;
+          const countdownInterval = setInterval(() => {
+            remaining -= 1;
+            if (remaining > 0) {
+              toast.loading(
+                `AI models are busy. Auto-retrying in ${remaining}s... (attempt ${attempt}/${MAX_AUTO_RETRIES})`,
+                { id: toastId }
+              );
+            } else {
+              clearInterval(countdownInterval);
+            }
+          }, 1000);
+
+          retryTimerRef.current = setTimeout(() => {
+            clearInterval(countdownInterval);
+            toast.dismiss(toastId);
+            doSubmit();
+          }, waitSec * 1000);
+
+          return;
+        }
+
+        throw new Error(errorData?.error || response.statusText || 'API Fault: Unable to reach architect services.');
+      }
+
+      // Success — reset retry counter
+      retryCountRef.current = 0;
 
       const data = await response.json();
 
@@ -97,12 +144,28 @@ export const RefinementEngine = () => {
       }
     } catch (error: unknown) {
       console.error('Submission Error:', error);
+      retryCountRef.current = 0;
       setStatus('questioning');
       toast.error('Logical Fault', {
         description: error instanceof Error ? error.message : 'Unable to process updates. Please retry.'
       });
     }
-  }, [questions, raw_context, iteration_count, setStatus, incrementIteration, setQuestions, setDraftJson, setDraftEnglish, setConfidence, setIsComplete]);
+  }, [questions, raw_context, iteration_count, setStatus, setQuestions, setDraftJson, setDraftEnglish, setConfidence, setIsComplete, setVisualTokens, accumulated_answers, accumulateAnswers]);
+
+  const handleSubmit = useCallback(async () => {
+    const unanswered = questions.filter(q => q.answer === undefined || q.answer === '');
+    if (unanswered.length > 0) {
+      toast.error('Contextual Gap Detected', {
+        description: `Please clarify: ${unanswered.map(q => q.field).join(', ')}`
+      });
+      return;
+    }
+
+    setStatus('analyzing');
+    incrementIteration();
+    retryCountRef.current = 0;
+    await doSubmit();
+  }, [questions, setStatus, incrementIteration, doSubmit]);
 
   const currentRound = iteration_count + 1;
   const totalRounds = MAX_ITERATIONS + 1;

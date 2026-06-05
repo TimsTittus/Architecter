@@ -19,10 +19,12 @@ interface ArchitectActions {
   setVisualTokens: (tokens: VisualToken[]) => void;
   reset: () => void;
   incrementIteration: () => void;
+  accumulateAnswers: () => void;
 }
 
 interface ArchitectState extends Session {
   iteration_count: number;
+  accumulated_answers: Record<string, string | boolean>;
 }
 
 type ArchitectStore = ArchitectState & ArchitectActions;
@@ -39,8 +41,10 @@ const createInitialState = (): ArchitectState => ({
   is_complete: false,
   confidence: 0,
   iteration_count: 0,
+  accumulated_answers: {},
   image_context: null,
   visual_tokens: [],
+
 });
 
 export const useArchitectStore = create<ArchitectStore>()(
@@ -73,6 +77,17 @@ export const useArchitectStore = create<ArchitectStore>()(
         set((state) => ({
           iteration_count: state.iteration_count + 1
         })),
+
+      accumulateAnswers: () =>
+        set((state) => {
+          const newAnswers = { ...state.accumulated_answers };
+          state.questions.forEach((q) => {
+            if (q.answer !== undefined && q.answer !== '') {
+              newAnswers[q.field] = q.answer;
+            }
+          });
+          return { accumulated_answers: newAnswers };
+        }),
 
       setImageContext: (image_context) => set({ image_context }),
       setVisualTokens: (visual_tokens) => set({ visual_tokens }),

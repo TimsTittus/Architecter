@@ -45,12 +45,23 @@ export const ContextInput = () => {
       <div className="relative group">
         <div className="absolute -inset-1 bg-white/5 rounded-[40px] blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
         <div className="relative flex flex-col gap-4 md:gap-6 p-4 md:p-8 rounded-[24px] md:rounded-[32px] bg-white/5 border border-white/10 backdrop-blur-3xl shadow-2xl">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g., I want to build a user management system with roles, permissions, and session tracking..."
-            className="min-h-[200px] md:min-h-[300px] bg-white/5 border border-white/10 rounded-xl md:rounded-2xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-white/20 resize-none text-lg md:text-xl font-medium leading-relaxed custom-scrollbar px-4 md:px-6 py-3 md:py-4 transition-all"
-          />
+          <div className="relative">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              maxLength={16000}
+              placeholder="e.g., I want to build a user management system with roles, permissions, and session tracking..."
+              className="min-h-[200px] md:min-h-[300px] bg-white/5 border border-white/10 rounded-xl md:rounded-2xl text-white placeholder:text-zinc-600 focus-visible:ring-1 focus-visible:ring-white/20 resize-none text-lg md:text-xl font-medium leading-relaxed custom-scrollbar px-4 md:px-6 py-3 md:py-4 transition-all pb-12"
+            />
+            <div className="absolute bottom-4 right-4 text-[10px] font-bold tracking-wider uppercase bg-black/40 px-2.5 py-1 rounded-md border border-white/5 backdrop-blur-sm pointer-events-none transition-colors">
+              <span className={cn(
+                input.length >= 15000 ? "text-amber-400 font-extrabold" : "text-zinc-500"
+              )}>
+                {input.length.toLocaleString()}
+              </span>
+              <span className="text-zinc-700"> / 16,000</span>
+            </div>
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10">
             <div className="flex gap-4">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { client, PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/gemini';
+import { PRIMARY_MODEL, FALLBACK_MODEL } from '@/lib/gemini';
+import { generateWithFallback } from '@/lib/retry';
 
 // Node.js runtime for full SDK compatibility
 export const runtime = 'nodejs';
@@ -47,7 +48,7 @@ import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 
 const RequestSchema = z.object({
-  user_input: z.string().min(1).max(4000),
+  user_input: z.string().min(1).max(16000),
   previous_responses: z.record(z.string(), z.any()).optional(),
   iteration_count: z.number().int().min(0).max(10),
 });
@@ -79,18 +80,7 @@ function parseGeminiResponse(text: string) {
   }
 }
 
-async function attemptGeneration(model: string, prompt: string) {
-  console.log(`[API] Attempting generation with model: ${model}`);
-  return await client.models.generateContent({
-    model,
-    contents: [
-      { role: 'user', parts: [{ text: SYSTEM_PROMPT + "\n\n" + prompt }] }
-    ],
-    config: {
-      responseMimeType: "application/json",
-    }
-  });
-}
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -157,50 +147,58 @@ export async function POST(req: NextRequest) {
 
     let prompt = `User Input: ${sanitizedInput}\n`;
     if (previous_responses && Object.keys(previous_responses).length > 0) {
-      prompt += `Previous Clarifications: ${JSON.stringify(previous_responses)}\n`;
+      prompt += `\n--- ALL PRIOR CLARIFICATIONS (DO NOT re-ask these) ---\n`;
+      for (const [field, answer] of Object.entries(previous_responses)) {
+        prompt += `  • ${field}: ${JSON.stringify(answer)}\n`;
+      }
+      prompt += `--- END OF PRIOR CLARIFICATIONS ---\n\n`;
+      prompt += `IMPORTANT: The above fields have ALREADY been answered. Do NOT generate questions for any of these fields again. Only ask about NEW, unaddressed aspects.\n`;
     }
     prompt += `Iteration Count: ${iteration_count}\n`;
     prompt += `\nPlease analyze and provide the JSON output according to the system instructions.`;
 
-    let result;
-    try {
-      // Primary Attempt
-      result = await attemptGeneration(PRIMARY_MODEL, prompt);
-    } catch (primaryError: unknown) {
-      console.warn(`[API] Primary model (${PRIMARY_MODEL}) failed:`, primaryError instanceof Error ? primaryError.message : String(primaryError));
+    const parts = [{ text: SYSTEM_PROMPT + "\n\n" + prompt }];
+    const genResult = await generateWithFallback(PRIMARY_MODEL, FALLBACK_MODEL, parts);
 
-      // Fallback Attempt
-      try {
-        result = await attemptGeneration(FALLBACK_MODEL, prompt);
-        console.log(`[API] Successfully fell back to ${FALLBACK_MODEL}`);
-      } catch (fallbackError: unknown) {
-        console.error('[API] Both primary and fallback models failed.');
-
-        const errorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-        const isQuota = errorMessage.includes('429');
-
-        return NextResponse.json({
-          is_complete: false,
-          missing_logic: "API Connection Error.",
-          questions: [
-            {
-              id: 'api-error',
-              field: 'error',
-              question: isQuota
-                ? "API quota exhausted. Please wait a minute before retrying."
-                : "The architect service is currently unavailable. Please verify your GEMINI_API_KEY.",
-              type: 'text'
-            }
-          ],
-          draft_json: "{}",
-          draft_english: "",
-          confidence: 0
-        });
-      }
+    // If models need a long wait, return retryable error to client
+    if (!genResult.ok) {
+      console.warn(`[API] Returning retryable error with retryAfterSec=${genResult.retryAfterSec}`);
+      return NextResponse.json({
+        error: genResult.errorMessage,
+        retryAfterSec: genResult.retryAfterSec,
+      }, { status: 503 });
     }
 
-    const responseText = result.text || '';
+    const responseText = genResult.result.text || '';
     const parsedData = parseGeminiResponse(responseText);
+
+    // SERVER-SIDE ENFORCEMENT: Force completion when max iterations reached
+    const MAX_SERVER_ITERATIONS = 4;
+    if (iteration_count >= MAX_SERVER_ITERATIONS && !parsedData.is_complete) {
+      console.log(`[API] Forcing completion at iteration_count=${iteration_count} (max=${MAX_SERVER_ITERATIONS})`);
+      parsedData.is_complete = true;
+      parsedData.questions = [];
+      parsedData.confidence = Math.max(parsedData.confidence || 0, 75);
+      parsedData.missing_logic = parsedData.missing_logic || 'Finalized with available context.';
+    }
+
+    // Filter out questions that were already answered in previous rounds
+    if (previous_responses && parsedData.questions?.length > 0) {
+      const answeredFields = new Set(Object.keys(previous_responses));
+      const originalCount = parsedData.questions.length;
+      parsedData.questions = parsedData.questions.filter(
+        (q: any) => !answeredFields.has(q.field)
+      );
+      if (parsedData.questions.length < originalCount) {
+        console.log(`[API] Filtered ${originalCount - parsedData.questions.length} duplicate questions`);
+      }
+      // If all questions were duplicates, force completion
+      if (parsedData.questions.length === 0 && !parsedData.is_complete) {
+        console.log('[API] All questions were duplicates — forcing completion');
+        parsedData.is_complete = true;
+        parsedData.confidence = Math.max(parsedData.confidence || 0, 80);
+      }
+    }
 
     // Update Quota usage
     if (usageRecord) {
@@ -224,6 +222,17 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error('[API] Critical handler error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const is429or503 = errorMessage.includes('429') || errorMessage.includes('503') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('UNAVAILABLE');
+
+    if (is429or503) {
+      const retryMatch = errorMessage.match(/retry in ([\d.]+)s/i);
+      const retryAfterSec = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 60;
+      return NextResponse.json({
+        error: `AI service temporarily unavailable. Auto-retrying in ${retryAfterSec}s...`,
+        retryAfterSec,
+      }, { status: 503 });
+    }
+
     return NextResponse.json({ error: 'Critical server error', details: errorMessage }, { status: 500 });
   }
 }
