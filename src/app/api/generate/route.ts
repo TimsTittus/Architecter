@@ -53,31 +53,47 @@ const RequestSchema = z.object({
   iteration_count: z.number().int().min(0).max(10),
 });
 
+import JSON5 from 'json5';
+
 // Helper to safely parse JSON from Gemini's response
 function parseGeminiResponse(text: string) {
-  try {
-    const cleanText = typeof text === 'string' ? text.replace(/```json\n?|```/g, '').trim() : '';
-    return JSON.parse(cleanText);
-  } catch (error) {
-    console.error('[API] Failed to parse Gemini JSON:', error);
-    console.log('[API] Raw output was:', text);
-
-    return {
-      is_complete: false,
-      missing_logic: "AI output parsing error.",
-      questions: [
-        {
-          id: 'error-retry',
-          field: 'retry',
-          question: "The architect encountered a parsing issue. Try re-submitting with slightly different wording?",
-          type: 'text'
-        }
-      ],
-      draft_json: "{}",
-      draft_english: "",
-      confidence: 0
-    };
+  if (typeof text !== 'string' || !text.trim()) {
+    console.error('[API] Empty response text');
+    throw new Error('Empty response text');
   }
+
+  try {
+    const cleaned = text.replace(/```(?:json)?\s*\n?/g, '').trim();
+    return JSON5.parse(cleaned);
+  } catch (_) { /* fall through */ }
+
+  try {
+    let repaired = text
+      .replace(/```(?:json)?\s*\n?/g, '')
+      .trim()
+      .replace(/\/\/.*$/gm, '')
+      .replace(/,(?=\s*[}\]])/g, '')
+      .replace(/,(?=\s*$)/, '');
+    return JSON.parse(repaired);
+  } catch (_) { /* fall through */ }
+
+  try {
+    const start = text.indexOf('{');
+    if (start !== -1) {
+      let depth = 0;
+      for (let i = start; i < text.length; i++) {
+        if (text[i] === '{') depth++;
+        if (text[i] === '}') depth--;
+        if (depth === 0) {
+          const candidate = text.slice(start, i + 1);
+          return JSON5.parse(candidate);
+        }
+      }
+    }
+  } catch (_) { /* fall through */ }
+
+  console.error('[API] Failed to parse Gemini JSON after all strategies. Raw text:', text);
+  throw new Error('Failed to parse Gemini JSON');
 }
 
 
@@ -222,13 +238,13 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error('[API] Critical handler error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const is429or503 = errorMessage.includes('429') || errorMessage.includes('503') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('UNAVAILABLE');
+    const is429or503 = errorMessage.includes('429') || errorMessage.includes('503') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('UNAVAILABLE') || errorMessage.includes('Failed to parse Gemini JSON') || errorMessage.includes('Empty response text');
 
     if (is429or503) {
       const retryMatch = errorMessage.match(/retry in ([\d.]+)s/i);
-      const retryAfterSec = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 60;
+      const retryAfterSec = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 2;
       return NextResponse.json({
-        error: `AI service temporarily unavailable. Auto-retrying in ${retryAfterSec}s...`,
+        error: `AI service temporarily unavailable or returned invalid format. Auto-retrying in ${retryAfterSec}s...`,
         retryAfterSec,
       }, { status: 503 });
     }

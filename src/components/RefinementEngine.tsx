@@ -26,7 +26,8 @@ export const RefinementEngine = () => {
     visual_tokens,
     setVisualTokens,
     accumulated_answers,
-    accumulateAnswers
+    accumulateAnswers,
+    reset
   } = useArchitectStore();
 
   const handleAnswer = useCallback((id: string, answer: string | boolean) => {
@@ -234,18 +235,27 @@ export const RefinementEngine = () => {
       </section>
 
       <footer className="pt-4 border-t border-white/5">
-        <Button
-          className="w-full gap-3 font-black text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-2xl h-12 md:h-14 bg-white text-black hover:bg-white/90 disabled:opacity-50 transition-all"
-          onClick={handleSubmit}
-          disabled={status === 'analyzing'}
-        >
-          {status === 'analyzing' ? (
-            <RefreshCcw className="h-5 w-5 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          Push Architectural Updates
-        </Button>
+        {status === 'complete' ? (
+          <Button
+            className="w-full gap-3 font-black text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-2xl h-12 md:h-14 bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30 transition-all"
+            onClick={reset}
+          >
+            Start New Architecture
+          </Button>
+        ) : (
+          <Button
+            className="w-full gap-3 font-black text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-2xl h-12 md:h-14 bg-white text-black hover:bg-white/90 disabled:opacity-50 transition-all"
+            onClick={handleSubmit}
+            disabled={status === 'analyzing'}
+          >
+            {status === 'analyzing' ? (
+              <RefreshCcw className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            Push Architectural Updates
+          </Button>
+        )}
       </footer>
     </div>
   );
